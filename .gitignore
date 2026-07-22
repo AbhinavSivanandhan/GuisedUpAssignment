@@ -5,12 +5,21 @@
 
 # PHP / Laravel
 vendor/
+api/.phpunit.result.cache
+api/guised_up
 storage/*.key
 storage/framework/cache/
 storage/framework/sessions/
 storage/framework/views/
 storage/logs/
+!api/storage/framework/cache/.gitkeep
+!api/storage/framework/sessions/.gitkeep
+!api/storage/framework/views/.gitkeep
+!api/storage/logs/.gitkeep
+api/storage/framework/views/*.php
 bootstrap/cache/*.php
+api/bootstrap/cache/*.php
+!api/bootstrap/cache/.gitkeep
 
 # Node / Expo
 node_modules/
@@ -47,6 +56,8 @@ htmlcov/
 
 # Local logs
 logs/
+!api/storage/logs/
+!api/storage/logs/.gitkeep
 *.log
 
 # IDE and OS noise

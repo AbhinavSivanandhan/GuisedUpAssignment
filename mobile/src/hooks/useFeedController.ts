@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 
 import { createApiClient } from '../api/client';
 import type { ApiClient } from '../api/client';
@@ -11,6 +11,9 @@ type UseFeedControllerOptions = {
 
 export function useFeedController(options: UseFeedControllerOptions = {}) {
   const [state, dispatch] = useReducer(feedReducer, initialFeedState);
+  const mountedRef = useRef(true);
+  const loadingPagesRef = useRef(new Set<number>());
+  const searchRequestRef = useRef(0);
   const apiClient = useMemo(
     () => options.apiClient ?? createApiClient(config.apiBaseUrl, config.developmentToken),
     [options.apiClient]
@@ -18,20 +21,27 @@ export function useFeedController(options: UseFeedControllerOptions = {}) {
 
   const loadFeedPage = useCallback(
     async (page: number) => {
-      if (page > 1 && (!state.hasNextPage || state.paginationLoading)) {
+      if (loadingPagesRef.current.has(page) || (page > 1 && (!state.hasNextPage || state.paginationLoading))) {
         return;
       }
 
+      loadingPagesRef.current.add(page);
       dispatch({ type: 'feed/loadStart', page });
 
       try {
         const response = await apiClient.fetchFeed(page);
-        dispatch({ type: 'feed/loadSuccess', response });
+        if (mountedRef.current) {
+          dispatch({ type: 'feed/loadSuccess', response });
+        }
       } catch (error) {
-        dispatch({
-          type: 'feed/loadError',
-          message: error instanceof Error ? error.message : 'Feed could not be loaded.'
-        });
+        if (mountedRef.current) {
+          dispatch({
+            type: 'feed/loadError',
+            message: error instanceof Error ? error.message : 'Feed could not be loaded.'
+          });
+        }
+      } finally {
+        loadingPagesRef.current.delete(page);
       }
     },
     [apiClient, state.hasNextPage, state.paginationLoading]
@@ -53,20 +63,28 @@ export function useFeedController(options: UseFeedControllerOptions = {}) {
 
       const trimmed = query.trim();
       if (trimmed === '') {
+        searchRequestRef.current += 1;
         return;
       }
 
+      const requestId = searchRequestRef.current + 1;
+      searchRequestRef.current = requestId;
       dispatch({ type: 'search/start' });
       apiClient
         .searchPosts(trimmed)
         .then((response) => {
-          dispatch({ type: 'search/success', posts: response.data });
+          if (mountedRef.current && searchRequestRef.current === requestId) {
+            dispatch({ type: 'search/success', query: trimmed, posts: response.data });
+          }
         })
         .catch((error) => {
-          dispatch({
-            type: 'search/error',
-            message: error instanceof Error ? error.message : 'Search could not be loaded.'
-          });
+          if (mountedRef.current && searchRequestRef.current === requestId) {
+            dispatch({
+              type: 'search/error',
+              query: trimmed,
+              message: error instanceof Error ? error.message : 'Search could not be loaded.'
+            });
+          }
         });
     },
     [apiClient]
@@ -79,12 +97,16 @@ export function useFeedController(options: UseFeedControllerOptions = {}) {
       try {
         await apiClient.reactToPost(postId);
       } catch (error) {
-        dispatch({
-          type: 'feed/loadError',
-          message: error instanceof Error ? error.message : 'Reaction could not be saved.'
-        });
+        if (mountedRef.current) {
+          dispatch({
+            type: 'feed/loadError',
+            message: error instanceof Error ? error.message : 'Reaction could not be saved.'
+          });
+        }
       } finally {
-        dispatch({ type: 'reaction/finish', postId });
+        if (mountedRef.current) {
+          dispatch({ type: 'reaction/finish', postId });
+        }
       }
     },
     [apiClient]
@@ -92,6 +114,9 @@ export function useFeedController(options: UseFeedControllerOptions = {}) {
 
   useEffect(() => {
     void loadFeedPage(1);
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
   return {

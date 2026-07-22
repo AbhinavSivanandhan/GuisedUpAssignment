@@ -54,8 +54,8 @@ export type FeedAction =
   | { type: 'feed/loadError'; message: string }
   | { type: 'search/queryChanged'; query: string }
   | { type: 'search/start' }
-  | { type: 'search/success'; posts: Post[] }
-  | { type: 'search/error'; message: string }
+  | { type: 'search/success'; query: string; posts: Post[] }
+  | { type: 'search/error'; query: string; message: string }
   | { type: 'reaction/start'; postId: number }
   | { type: 'reaction/finish'; postId: number }
   | { type: 'error/clear' };
@@ -107,6 +107,10 @@ export function feedReducer(state: FeedState, action: FeedAction): FeedState {
         error: null
       };
     case 'search/success':
+      if (state.mode !== 'search' || state.query.trim() !== action.query) {
+        return state;
+      }
+
       return {
         ...state,
         searchPosts: action.posts,
@@ -114,6 +118,10 @@ export function feedReducer(state: FeedState, action: FeedAction): FeedState {
         error: null
       };
     case 'search/error':
+      if (state.mode !== 'search' || state.query.trim() !== action.query) {
+        return state;
+      }
+
       return {
         ...state,
         searchLoading: false,

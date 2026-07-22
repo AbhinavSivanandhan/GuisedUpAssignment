@@ -1,6 +1,6 @@
 # Guised Up Real Connections Feed
 
-This repository is a take-home assessment implementation in progress. The current foundation implements the Laravel API base, PostgreSQL/pgvector schema, Sanctum-protected post creation, personalized feed retrieval, semantic search, interaction creation, raw SQL challenge answers, one Expo React Native feed screen, a Python FastAPI embedding/authenticity service, Docker Compose configuration, and focused tests.
+This repository is a take-home assessment implementation in progress. The current repository implements the Laravel API base, PostgreSQL/pgvector schema, Sanctum-protected post creation, personalized feed retrieval, semantic search, interaction creation, raw SQL challenge answers, one Expo React Native feed screen, a Python FastAPI embedding/authenticity service, Docker Compose configuration, and focused tests.
 
 ## Implemented In This Foundation
 
@@ -16,7 +16,7 @@ This repository is a take-home assessment implementation in progress. The curren
 
 ## Deferred
 
-Hosted deployment, final submission, and explanation video are not implemented yet.
+Hosted deployment, private GitHub publishing, final submission messaging, and explanation video are not implemented yet.
 
 ## Prerequisites
 
@@ -27,22 +27,24 @@ Host PHP and Composer are not required when using Docker.
 
 ## Setup
 
-Create a local environment file from the example:
+Create a local environment file from the example when you want to override the Docker defaults:
 
 ```bash
 cp .env.example .env
 ```
 
-Set `APP_KEY` before running Laravel. If using Docker after dependencies install, generate it with:
-
-```bash
-docker compose run --rm api php artisan key:generate
-```
+For local assessment use, Docker Compose provides non-secret development defaults for PostgreSQL and hydrates the ignored Laravel `api/.env` file at API startup. Keep real secrets out of tracked files.
 
 Start services:
 
 ```bash
 docker compose up --build
+```
+
+If host port `5432` is already allocated, use an alternate host port while keeping the internal database service unchanged:
+
+```bash
+DB_PORT_FORWARD=55432 docker compose up --build
 ```
 
 Run migrations and seed test users:
@@ -196,9 +198,10 @@ The fallback uses stable SHA-256 hashing, not Python's randomized `hash()`. It r
 - Laravel feature tests passed: 24 tests, 74 assertions.
 - Python embedding-service tests passed: 9 tests.
 - Mobile TypeScript type-check passed.
-- Mobile state tests passed: 5 tests.
+- Mobile state tests passed: 7 tests.
 - Expo start was verified with `npm run start -- --localhost --port 8091`; Metro reached `exp://127.0.0.1:8091`.
 - PostgreSQL migration verification against `pgvector/pgvector:pg16` passed with the `vector` extension enabled. Host port 5432 was already allocated locally, so verification used `DB_PORT_FORWARD=55432`.
+- Authenticated HTTP smoke testing against the Docker stack passed for token creation, unauthenticated rejection, `POST /api/posts`, `POST /api/interactions`, `GET /api/feed`, `GET /api/search`, validation errors, 384-dimensional embedding persistence, and cleanup of marked smoke records.
 - A rolled-back PostgreSQL check executed `posts.embedding <=> query_vector` and returned a similarity score of `1` for an identical 384-dimensional vector.
 - `sql/queries.sql` was executed against PostgreSQL with rolled-back fixtures covering the D1 seven-day window, D2 30-day post window, D3 exactly-100-view and reaction exclusions, D4 exactly-20-post and old-post exclusions, and interaction-count ties.
 
@@ -207,6 +210,6 @@ The fallback uses stable SHA-256 hashing, not Python's randomized `hash()`. It r
 - Full clean-start verification from a fresh checkout still has to be repeated in the target environment.
 - The transformer model path is configured but optional dependencies and model download are not claimed verified until they are installed and run successfully.
 - The semantic search implementation currently supports only a small explicit temporal parser for `last week`; broader natural-language date parsing remains deferred.
-- Simulator/device rendering was not verified.
+- Simulator/device rendering was not verified. Expo Web was attempted but is not available because this minimal native Expo app does not install `react-dom`, `react-native-web`, or `@expo/metro-runtime`.
 - `npm install` for the mobile app reported 11 moderate vulnerabilities in the installed dependency tree; no audit fix was applied.
 - Deployment and video remain deferred.

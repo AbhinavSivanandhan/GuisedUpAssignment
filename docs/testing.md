@@ -1,6 +1,6 @@
 # Testing Strategy
 
-Backend tests now exist for implemented post creation, feed ranking, semantic search, and interaction behavior. Laravel feature tests and Python embedding-service tests have been run in Docker. SQL challenge queries have been executed against PostgreSQL with rolled-back fixtures. The Expo React Native feed screen has TypeScript and focused state tests. Deployment and video verification remain future work. The strategy prioritizes critical flows and does not require exhaustive TDD.
+Backend tests now exist for implemented post creation, feed ranking, semantic search, and interaction behavior. Laravel feature tests and Python embedding-service tests have been run in Docker. Authenticated HTTP smoke tests have been run against the Docker PostgreSQL/pgvector stack. SQL challenge queries have been executed against PostgreSQL with rolled-back fixtures. The Expo React Native feed screen has TypeScript and focused state tests. Deployment and video verification remain future work. The strategy prioritizes critical flows and does not require exhaustive TDD.
 
 ## Sanctum Authentication
 
@@ -89,7 +89,7 @@ final_score =
 ## React Native Component and Integration Behavior
 
 - Component or integration tests should cover feed loading, post card fields, relative time, reaction button states, infinite scrolling, inline search results, empty state, error state, and retry behavior.
-- Current evidence: the mobile app under `mobile/` separates the API client, feed/search state hook, reducer, reusable `PostCard`, screen composition, and theme tokens. `npm run typecheck` passed. `npm test` passed 5 reducer tests covering pagination deduplication, search-mode switching, recoverable error handling, pagination metadata, and duplicate filtering. Expo startup reached Metro on `exp://127.0.0.1:8091`. Simulator/device rendering was not verified.
+- Current evidence: the mobile app under `mobile/` separates the API client, feed/search state hook, reducer, reusable `PostCard`, screen composition, and theme tokens. `npm run typecheck` passed. `npm test` passed 7 reducer tests covering pagination deduplication, search-mode switching, stale search-response rejection, stale search-error rejection, recoverable error handling, pagination metadata, and duplicate filtering. Expo startup reached Metro on `http://localhost:8091` / `exp://127.0.0.1:8091`. Expo Web was attempted but required additional web dependencies not included in the minimal native app. Simulator/device rendering was not verified.
 
 ## SQL Challenge Verification
 

@@ -16,7 +16,7 @@ The current workspace contains `Assignment.md`, this roadmap, repository governa
 - Verified assessment-weighted progress after US-18 implementation is approximately 57%, based on the same evidence plus `GET /api/feed`, focused feed-ranking tests, route verification, and API image build verification.
 - Verified assessment-weighted progress after US-19 implementation is approximately 62%, based on the same evidence plus `GET /api/search`, focused search tests, route verification, Docker image builds, and PostgreSQL pgvector operator verification.
 - Verified assessment-weighted progress after the SQL challenge implementation is approximately 77%, based on the same evidence plus `sql/queries.sql`, PostgreSQL execution of D1 through D4 with rolled-back fixtures, `EXPLAIN` output, and rollback cleanup verification.
-- Verified assessment-weighted progress after the React Native Feed Screen implementation is approximately 97%, based on the same evidence plus `mobile/`, TypeScript type-check, 5 mobile state tests, and Expo Metro startup verification. Deployment, final submission, and explanation video remain incomplete.
+- Verified technical/repository completion after the final integration audit is 100% for implementation, documentation, Docker runtime, automated tests, API smoke tests, SQL verification, and mobile static/runtime-startup checks available in this environment. Overall submission completion remains approximately 97% because private GitHub publishing, explanation video recording, and final submission messaging are owner-only steps that have not occurred.
 
 ## 2. Definition of success
 
@@ -206,7 +206,7 @@ Status and evidence:
 
 - Status: Documentation complete for verified usage so far.
 - Evidence: `docs/TSD.md` section 28 and `docs/ai-usage.md` record Codex usage for traceability, governance, architecture documentation, TSD drafting, feature-specification drafting, documentation consistency review, roadmap evidence synchronization, Laravel foundation implementation, PostgreSQL/pgvector schema implementation, Python embedding-service implementation, endpoint implementation, automated-test creation, and documentation synchronization.
-- Implementation status: Backend foundation implementation and runtime testing are now claimed only where direct evidence is listed. Deployment and video generation are not claimed.
+- Implementation status: Backend, SQL, and mobile implementation and runtime/static verification are claimed only where direct evidence is listed. Deployment, private GitHub publishing, final submission messaging, and video generation are not claimed.
 
 #### US-08 — Record trade-offs and assumptions
 
@@ -474,7 +474,7 @@ Status and evidence:
 
 - Status: Implemented for current backend and SQL scope; mobile, deployment, final submission, and video remain deferred.
 - Evidence: Controllers delegate validation to form requests; embedding work uses `EmbeddingClient`; feed ranking uses `FeedCandidateRepository` and `FeedRanker`; search uses `PostSearch`, `SearchCandidateRepository`, `SearchSimilarityCalculator`, and `TemporalIntentParser`; ranking and search limits live in configuration; response resources keep API output separate; migrations and models preserve persistence boundaries.
-- Verification: Laravel and Python tests passed for implemented behavior.
+- Verification: Laravel tests passed: 24 tests, 74 assertions. Python tests passed: 9 tests. Final authenticated API smoke tests passed against the Docker PostgreSQL/pgvector stack.
 
 #### US-22 — Test the most critical logic
 
@@ -490,9 +490,9 @@ Completes DEL-06 and contributes to DEL-02.
 
 Status and evidence:
 
-- Status: Implemented for post, feed, semantic-search, interaction, and embedding-service scope; mobile tests remain deferred.
-- Evidence: `api/tests/Feature/PostCreationTest.php`, `api/tests/Feature/FeedRankingTest.php`, `api/tests/Feature/SearchTest.php`, `api/tests/Feature/InteractionCreationTest.php`, `embedding-service/tests/test_core.py`, and `embedding-service/tests/test_api.py`.
-- Verification: Laravel feature tests passed: 24 tests, 74 assertions. Python tests passed: 9 tests.
+- Status: Implemented for post, feed, semantic-search, interaction, embedding-service, and mobile state scope.
+- Evidence: `api/tests/Feature/PostCreationTest.php`, `api/tests/Feature/FeedRankingTest.php`, `api/tests/Feature/SearchTest.php`, `api/tests/Feature/InteractionCreationTest.php`, `embedding-service/tests/test_core.py`, `embedding-service/tests/test_api.py`, and `mobile/tests/feedReducer.test.ts`.
+- Verification: Laravel feature tests passed: 24 tests, 74 assertions. Python tests passed: 9 tests. Mobile state tests passed: 7 tests.
 
 #### US-23 — Validate backend reproducibility
 
@@ -508,9 +508,9 @@ Completes DEL-02 when US-09 through US-22 are also accepted.
 
 Status and evidence:
 
-- Status: Partially verified. Docker builds, migrations, post/feed/search/interaction endpoints, route registration, and tests were verified. Full clean-start verification from a fresh checkout and full Docker HTTP exercise of all endpoints remain outstanding.
+- Status: Verified in the current repository environment. Full clean-start verification from a fresh checkout remains intentionally unperformed in the final audit per user instruction.
 - Evidence: `docker-compose.yml`, `api/Dockerfile`, `embedding-service/Dockerfile`, `.env.example`, and `README.md`.
-- Verification: Docker images built; PostgreSQL 16 pgvector service migrated successfully; `vector` extension confirmed. `GET /api/feed` and `GET /api/search` are implemented and route-verified. PostgreSQL pgvector execution was verified with a rolled-back `posts.embedding <=> query_vector` query.
+- Verification: Docker images built; PostgreSQL 16 pgvector service migrated successfully; `vector` extension confirmed. `GET /api/feed` and `GET /api/search` are implemented and route-verified. Authenticated HTTP smoke testing passed for token issuance, unauthenticated rejection, post creation, 384-dimensional embedding persistence, interaction persistence, feed pagination shape, semantic search shape and 10-result limit, validation errors, and cleanup of marked smoke records. PostgreSQL pgvector execution was verified with a rolled-back `posts.embedding <=> query_vector` query.
 
 ### Phase 3 — React Native Feed Screen
 
@@ -530,7 +530,7 @@ Status and evidence:
 
 - Status: Implemented and statically verified; simulator/device behavior not verified.
 - Evidence: `mobile/src/screens/FeedScreen.tsx`, `mobile/src/hooks/useFeedController.ts`, `mobile/src/api/client.ts`, `mobile/src/api/types.ts`, and `mobile/App.tsx`.
-- Verification: `npm run typecheck` passed. Expo startup reached Metro at `exp://127.0.0.1:8091`.
+- Verification: `npm run typecheck` passed. Expo startup reached Metro at `http://localhost:8091` / `exp://127.0.0.1:8091`. Expo Web was attempted but required additional web dependencies that are not part of the minimal native app.
 
 #### US-25 — Present complete post cards
 
@@ -586,7 +586,7 @@ Status and evidence:
 
 - Status: Implemented and tested at reducer level; simulator/device behavior not verified.
 - Evidence: `mobile/src/screens/FeedScreen.tsx`, `mobile/src/hooks/useFeedController.ts`, `mobile/src/state/feedReducer.ts`, and `mobile/tests/feedReducer.test.ts`.
-- Verification: `npm test` passed 5 tests, including pagination append without duplicate posts and next-page metadata handling.
+- Verification: `npm test` passed 7 tests, including pagination append without duplicate posts and next-page metadata handling.
 
 #### US-28 — Search inline from the Feed Screen
 
@@ -605,7 +605,7 @@ Status and evidence:
 
 - Status: Implemented and tested at reducer level; simulator/device behavior not verified.
 - Evidence: `mobile/src/screens/FeedScreen.tsx`, `mobile/src/hooks/useFeedController.ts`, `mobile/src/api/client.ts`, `mobile/src/state/feedReducer.ts`, and `mobile/tests/feedReducer.test.ts`.
-- Verification: `npm test` passed 5 tests, including search-mode switching and clearing back to feed mode.
+- Verification: `npm test` passed 7 tests, including search-mode switching, clearing back to feed mode, and ignoring stale search success/error results.
 
 #### US-29 — Handle screen states gracefully
 
@@ -625,7 +625,7 @@ Status and evidence:
 
 - Status: Implemented and partially tested through reducer checks; simulator/device behavior not verified.
 - Evidence: `mobile/src/screens/FeedScreen.tsx`, `mobile/src/hooks/useFeedController.ts`, and `mobile/src/state/feedReducer.ts` handle initial loading, pagination loading, search loading, empty states, recoverable errors, and retry.
-- Verification: `npm run typecheck` passed. `npm test` passed 5 tests, including recoverable error handling.
+- Verification: `npm run typecheck` passed. `npm test` passed 7 tests, including recoverable error handling.
 
 #### US-30 — Deliver intentional UI quality
 
@@ -643,7 +643,7 @@ Status and evidence:
 
 - Status: Implemented and statically verified; visual quality was not inspected on simulator/device.
 - Evidence: `mobile/src/theme/tokens.ts`, `mobile/src/screens/FeedScreen.tsx`, and `mobile/src/components/PostCard.tsx` define and use custom colors, spacing, typography, borders, cards, loading, empty, and error states.
-- Verification: `npm run typecheck` passed and Expo startup reached Metro at `exp://127.0.0.1:8091`.
+- Verification: `npm run typecheck` passed and Expo startup reached Metro at `http://localhost:8091` / `exp://127.0.0.1:8091`.
 
 ### Phase 4 — Raw SQL challenge
 

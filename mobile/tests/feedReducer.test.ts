@@ -61,6 +61,7 @@ test('search mode switches on query and clears back to feed mode', () => {
 
   const withResults = feedReducer(searching, {
     type: 'search/success',
+    query: 'travel stories',
     posts: [post(4)]
   });
   assert.equal(withResults.searchPosts.length, 1);
@@ -71,6 +72,48 @@ test('search mode switches on query and clears back to feed mode', () => {
   });
   assert.equal(cleared.mode, 'feed');
   assert.equal(cleared.searchPosts.length, 0);
+});
+
+test('stale search success is ignored when the query changes', () => {
+  const searching = feedReducer(initialFeedState, {
+    type: 'search/queryChanged',
+    query: 'travel stories'
+  });
+
+  const changed = feedReducer(searching, {
+    type: 'search/queryChanged',
+    query: 'coffee meetups'
+  });
+
+  const staleResult = feedReducer(changed, {
+    type: 'search/success',
+    query: 'travel stories',
+    posts: [post(7)]
+  });
+
+  assert.equal(staleResult.query, 'coffee meetups');
+  assert.equal(staleResult.searchPosts.length, 0);
+});
+
+test('stale search error is ignored after search is cleared', () => {
+  const searching = feedReducer(initialFeedState, {
+    type: 'search/queryChanged',
+    query: 'travel stories'
+  });
+
+  const cleared = feedReducer(searching, {
+    type: 'search/queryChanged',
+    query: ''
+  });
+
+  const staleError = feedReducer(cleared, {
+    type: 'search/error',
+    query: 'travel stories',
+    message: 'Search failed.'
+  });
+
+  assert.equal(staleError.mode, 'feed');
+  assert.equal(staleError.error, null);
 });
 
 test('error handling clears loading flags and preserves recoverable message', () => {
