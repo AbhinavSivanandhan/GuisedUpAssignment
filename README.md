@@ -1,6 +1,6 @@
 # Guised Up Real Connections Feed
 
-This repository is a take-home assessment implementation in progress. The current foundation implements the Laravel API base, PostgreSQL/pgvector schema, Sanctum-protected post creation, personalized feed retrieval, semantic search, interaction creation, raw SQL challenge answers, a Python FastAPI embedding/authenticity service, Docker Compose configuration, and focused tests.
+This repository is a take-home assessment implementation in progress. The current foundation implements the Laravel API base, PostgreSQL/pgvector schema, Sanctum-protected post creation, personalized feed retrieval, semantic search, interaction creation, raw SQL challenge answers, one Expo React Native feed screen, a Python FastAPI embedding/authenticity service, Docker Compose configuration, and focused tests.
 
 ## Implemented In This Foundation
 
@@ -11,11 +11,12 @@ This repository is a take-home assessment implementation in progress. The curren
 - Sanctum token endpoint: `POST /api/tokens`.
 - Protected endpoints: `POST /api/posts`, `GET /api/feed`, `GET /api/search`, and `POST /api/interactions`.
 - Raw SQL challenge answers at `sql/queries.sql`.
+- Expo React Native feed screen under `mobile/`.
 - Deterministic hash embedding fallback for tests and unavailable model downloads.
 
 ## Deferred
 
-The Expo React Native app, hosted deployment, final submission, and explanation video are not implemented yet.
+Hosted deployment, final submission, and explanation video are not implemented yet.
 
 ## Prerequisites
 
@@ -123,6 +124,26 @@ curl "http://localhost:8000/api/search?q=funny%20travel%20stories%20from%20last%
 
 Search embeds the query through the embedding-service boundary and ranks posts by vector cosine similarity. PostgreSQL uses pgvector for similarity search. SQLite feature tests use a database-independent cosine path behind the same search repository boundary. Results return at most 10 posts with author information, post text, optional image URL, creation time, similarity score, embedding mode, and any parsed temporal filter. The phrase `last week` is currently interpreted as a trailing seven-day `created_at` filter.
 
+## Mobile Feed Screen
+
+The Expo app lives in `mobile/`. Configure the API URL and Sanctum token with Expo public environment variables:
+
+```bash
+cd mobile
+cp .env.example .env
+```
+
+Set `EXPO_PUBLIC_API_BASE_URL` to the Laravel base URL and set `EXPO_PUBLIC_SANCTUM_TOKEN` to a token from `POST /api/tokens`.
+
+Install and run:
+
+```bash
+npm install
+npm run start -- --localhost
+```
+
+The screen fetches `GET /api/feed`, paginates with infinite scroll, renders post cards with avatar placeholder, username, post text, relative time, and reaction button, calls `POST /api/interactions` for reactions, and calls `GET /api/search` from the inline search bar.
+
 ## Tests
 
 Laravel tests:
@@ -141,6 +162,14 @@ Pure Python core tests can run locally if Python is available:
 
 ```bash
 PYTHONPATH=embedding-service python3 -m unittest discover -s embedding-service/tests
+```
+
+Mobile checks:
+
+```bash
+cd mobile
+npm run typecheck
+npm test
 ```
 
 The tests use fallback mode or mocks and do not require downloading `sentence-transformers/all-MiniLM-L6-v2`. The default Docker image installs the FastAPI service and fallback path only. To exercise the transformer path later, install `embedding-service/requirements-optional-transformer.txt` in the embedding-service environment and set `EMBEDDING_MODE=transformer`.
@@ -166,6 +195,9 @@ The fallback uses stable SHA-256 hashing, not Python's randomized `hash()`. It r
 - Docker images for `api` and `embedding-service` were built successfully.
 - Laravel feature tests passed: 24 tests, 74 assertions.
 - Python embedding-service tests passed: 9 tests.
+- Mobile TypeScript type-check passed.
+- Mobile state tests passed: 5 tests.
+- Expo start was verified with `npm run start -- --localhost --port 8091`; Metro reached `exp://127.0.0.1:8091`.
 - PostgreSQL migration verification against `pgvector/pgvector:pg16` passed with the `vector` extension enabled. Host port 5432 was already allocated locally, so verification used `DB_PORT_FORWARD=55432`.
 - A rolled-back PostgreSQL check executed `posts.embedding <=> query_vector` and returned a similarity score of `1` for an identical 384-dimensional vector.
 - `sql/queries.sql` was executed against PostgreSQL with rolled-back fixtures covering the D1 seven-day window, D2 30-day post window, D3 exactly-100-view and reaction exclusions, D4 exactly-20-post and old-post exclusions, and interaction-count ties.
@@ -175,4 +207,6 @@ The fallback uses stable SHA-256 hashing, not Python's randomized `hash()`. It r
 - Full clean-start verification from a fresh checkout still has to be repeated in the target environment.
 - The transformer model path is configured but optional dependencies and model download are not claimed verified until they are installed and run successfully.
 - The semantic search implementation currently supports only a small explicit temporal parser for `last week`; broader natural-language date parsing remains deferred.
-- Mobile UI, deployment, and video remain deferred.
+- Simulator/device rendering was not verified.
+- `npm install` for the mobile app reported 11 moderate vulnerabilities in the installed dependency tree; no audit fix was applied.
+- Deployment and video remain deferred.

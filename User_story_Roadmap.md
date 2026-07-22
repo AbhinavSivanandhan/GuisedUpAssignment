@@ -4,7 +4,7 @@
 
 Source of truth: `Assignment.md`, the frozen implementation contract and complete assessment transcription. The original assessment PDF remains the external requirement authority for audit traceability and includes additional product/evaluation phrasing preserved in this roadmap.
 
-The current workspace contains `Assignment.md`, this roadmap, repository governance, workspace documentation, the TSD, architecture documentation, testing strategy, AI usage documentation, an ADR, feature specifications, a Laravel API foundation, a Python FastAPI embedding service, Docker Compose configuration, a README, an environment example, migrations, seeders, `GET /api/feed`, `GET /api/search`, `sql/queries.sql`, and focused backend tests. It does not contain the Expo mobile app, deployment artifacts, final submission, or video. Therefore:
+The current workspace contains `Assignment.md`, this roadmap, repository governance, workspace documentation, the TSD, architecture documentation, testing strategy, AI usage documentation, an ADR, feature specifications, a Laravel API foundation, a Python FastAPI embedding service, Docker Compose configuration, a README, environment examples, migrations, seeders, `GET /api/feed`, `GET /api/search`, `sql/queries.sql`, an Expo React Native feed screen, and focused tests. It does not contain deployment artifacts, final submission, or video. Therefore:
 
 - This roadmap organizes and traces the requirements in `Assignment.md` and the original assessment PDF.
 - A roadmap item may not weaken or contradict `Assignment.md` or the original assessment PDF.
@@ -16,6 +16,7 @@ The current workspace contains `Assignment.md`, this roadmap, repository governa
 - Verified assessment-weighted progress after US-18 implementation is approximately 57%, based on the same evidence plus `GET /api/feed`, focused feed-ranking tests, route verification, and API image build verification.
 - Verified assessment-weighted progress after US-19 implementation is approximately 62%, based on the same evidence plus `GET /api/search`, focused search tests, route verification, Docker image builds, and PostgreSQL pgvector operator verification.
 - Verified assessment-weighted progress after the SQL challenge implementation is approximately 77%, based on the same evidence plus `sql/queries.sql`, PostgreSQL execution of D1 through D4 with rolled-back fixtures, `EXPLAIN` output, and rollback cleanup verification.
+- Verified assessment-weighted progress after the React Native Feed Screen implementation is approximately 97%, based on the same evidence plus `mobile/`, TypeScript type-check, 5 mobile state tests, and Expo Metro startup verification. Deployment, final submission, and explanation video remain incomplete.
 
 ## 2. Definition of success
 
@@ -525,6 +526,12 @@ Acceptance criteria:
 
 Contributes to DEL-03.
 
+Status and evidence:
+
+- Status: Implemented and statically verified; simulator/device behavior not verified.
+- Evidence: `mobile/src/screens/FeedScreen.tsx`, `mobile/src/hooks/useFeedController.ts`, `mobile/src/api/client.ts`, `mobile/src/api/types.ts`, and `mobile/App.tsx`.
+- Verification: `npm run typecheck` passed. Expo startup reached Metro at `exp://127.0.0.1:8091`.
+
 #### US-25 — Present complete post cards
 
 As a feed user, I want each post presented with useful context and an interaction affordance.
@@ -539,6 +546,12 @@ Acceptance criteria:
 
 Contributes to DEL-03.
 
+Status and evidence:
+
+- Status: Implemented and statically verified; simulator/device behavior not verified.
+- Evidence: `mobile/src/components/PostCard.tsx`, `mobile/src/utils/time.ts`, and `mobile/src/theme/tokens.ts` render an avatar placeholder, username, post text, relative time, and reaction button.
+- Verification: `npm run typecheck` passed.
+
 #### US-26 — React from the feed
 
 As a user, I want the reaction control to work so that my interaction can be logged.
@@ -549,6 +562,12 @@ Acceptance criteria:
 - Provide clear pending, success, and failure feedback consistent with the screen design.
 
 Contributes to DEL-03 and exercises DEL-02.
+
+Status and evidence:
+
+- Status: Implemented and statically verified; backend interaction endpoint was previously tested, but simulator/device behavior was not verified.
+- Evidence: `mobile/src/components/PostCard.tsx`, `mobile/src/hooks/useFeedController.ts`, and `mobile/src/api/client.ts`; reactions go through `ApiClient.reactToPost` and send `type = reaction`.
+- Verification: `npm run typecheck` passed.
 
 #### US-27 — Load additional feed pages
 
@@ -563,6 +582,12 @@ Acceptance criteria:
 
 Contributes to DEL-03.
 
+Status and evidence:
+
+- Status: Implemented and tested at reducer level; simulator/device behavior not verified.
+- Evidence: `mobile/src/screens/FeedScreen.tsx`, `mobile/src/hooks/useFeedController.ts`, `mobile/src/state/feedReducer.ts`, and `mobile/tests/feedReducer.test.ts`.
+- Verification: `npm test` passed 5 tests, including pagination append without duplicate posts and next-page metadata handling.
+
 #### US-28 — Search inline from the Feed Screen
 
 As a user, I want a search bar within the feed so that natural-language results appear without leaving the screen.
@@ -575,6 +600,12 @@ Acceptance criteria:
 - Restore or clearly transition back to the personalized feed when search is cleared.
 
 Contributes to DEL-03.
+
+Status and evidence:
+
+- Status: Implemented and tested at reducer level; simulator/device behavior not verified.
+- Evidence: `mobile/src/screens/FeedScreen.tsx`, `mobile/src/hooks/useFeedController.ts`, `mobile/src/api/client.ts`, `mobile/src/state/feedReducer.ts`, and `mobile/tests/feedReducer.test.ts`.
+- Verification: `npm test` passed 5 tests, including search-mode switching and clearing back to feed mode.
 
 #### US-29 — Handle screen states gracefully
 
@@ -590,6 +621,12 @@ Acceptance criteria:
 
 Contributes to DEL-03.
 
+Status and evidence:
+
+- Status: Implemented and partially tested through reducer checks; simulator/device behavior not verified.
+- Evidence: `mobile/src/screens/FeedScreen.tsx`, `mobile/src/hooks/useFeedController.ts`, and `mobile/src/state/feedReducer.ts` handle initial loading, pagination loading, search loading, empty states, recoverable errors, and retry.
+- Verification: `npm run typecheck` passed. `npm test` passed 5 tests, including recoverable error handling.
+
 #### US-30 — Deliver intentional UI quality
 
 As a user, I want a considered visual experience so that the screen feels like a real product.
@@ -601,6 +638,12 @@ Acceptance criteria:
 - The UI need not be pixel-perfect but must feel intentional.
 
 Completes DEL-03 and supports the 20% React Native Screen score.
+
+Status and evidence:
+
+- Status: Implemented and statically verified; visual quality was not inspected on simulator/device.
+- Evidence: `mobile/src/theme/tokens.ts`, `mobile/src/screens/FeedScreen.tsx`, and `mobile/src/components/PostCard.tsx` define and use custom colors, spacing, typography, borders, cards, loading, empty, and error states.
+- Verification: `npm run typecheck` passed and Expo startup reached Metro at `exp://127.0.0.1:8091`.
 
 ### Phase 4 — Raw SQL challenge
 

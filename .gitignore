@@ -16,6 +16,7 @@ bootstrap/cache/*.php
 node_modules/
 .expo/
 .expo-shared/
+mobile/.test-build/
 dist/
 build/
 web-build/
