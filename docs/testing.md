@@ -1,0 +1,95 @@
+# Testing Strategy
+
+Backend foundation tests now exist for implemented behavior. Laravel feature tests and Python embedding-service tests have been run in Docker during the backend foundation step. Feed ranking, semantic search, React Native, SQL, deployment, and video verification remain future work. The strategy prioritizes critical flows and does not require exhaustive TDD.
+
+## Sanctum Authentication
+
+- Feature tests should reject unauthenticated requests to `POST /api/posts`, `GET /api/feed`, `GET /api/search`, and `POST /api/interactions`.
+- Feature tests should accept valid Sanctum bearer tokens and scope user-specific behavior to the authenticated user.
+- Current evidence: implemented tests cover unauthenticated `POST /api/posts` and `POST /api/interactions`; feed and search are deferred.
+
+## Post Creation
+
+- Validate required text and optional image URL.
+- Confirm successful creation persists author, text, image URL, timestamps, authenticity scores, embedding status, and a 384-dimensional embedding.
+- Confirm failures return documented validation or service errors without partial invalid persistence.
+- Current evidence: implemented Laravel tests cover validation, successful persistence, malformed embedding responses, and service failure without partial post persistence.
+
+## Embedding Generation and Persistence
+
+- Confirm the Python service returns 384 dimensions for `sentence-transformers/all-MiniLM-L6-v2`.
+- Confirm Laravel stores embeddings in `posts.embedding` as pgvector-compatible `vector(384)`.
+- Current evidence: Python tests cover 384-dimensional fallback and mocked transformer response shapes; Laravel migrations were run against PostgreSQL with pgvector enabled.
+
+## Deterministic Embedding Fallback
+
+- Confirm identical input returns identical vectors.
+- Confirm vectors have 384 dimensions.
+- Confirm fallback use is surfaced through `embedding_status`.
+- Confirm tests do not treat fallback as genuine semantic retrieval.
+- Current evidence: Python tests cover deterministic repeatability, finite unit-normalized output, and fallback mode identification.
+
+## Personalized Ranking
+
+- Verify the exact formula:
+
+```text
+final_score =
+    0.30 × authenticity
+  + 0.30 × relationship_depth
+  + 0.25 × semantic_similarity
+  + 0.15 × time_decay
+```
+
+- Verify all component scores are normalized to `0..1`.
+- Verify replies weigh more than reactions and reactions weigh more than views.
+- Verify relationship events use recency decay.
+
+## Ranking Exclusions
+
+- Verify global engagement ranking is prohibited.
+- Verify global views, reactions, replies, comments, likes, shares, and follower totals do not contribute to `final_score`.
+- Verify relationship depth uses only the authenticated user's interactions with each author.
+
+## Stable Ordering and Pagination
+
+- Verify ordering by `final_score DESC`, `created_at DESC`, and `id DESC`.
+- Verify `GET /api/feed` returns 20 posts per page when available.
+- Verify pagination metadata or links are present.
+- Verify stable behavior across pages.
+
+## Semantic Search
+
+- Verify query validation for missing and empty `q`.
+- Verify query embedding and cosine similarity are used.
+- Verify search returns at most 10 results.
+- Verify search does not silently degrade to keyword search.
+
+## Temporal-Intent Filtering
+
+- Verify a natural-language query with temporal intent applies semantic retrieval and the documented date range.
+- Verify the response exposes or documents the applied temporal filter.
+
+## Interaction Validation and Persistence
+
+- Verify `POST /api/interactions` accepts only `view`, `reply`, or `reaction`.
+- Verify invalid `post_id` and invalid `type` fail.
+- Verify raw events are persisted for relationship-depth and SQL reporting.
+- Current evidence: implemented Laravel tests cover invalid type, missing post, valid persistence, and repeated raw event preservation.
+
+## Python Embedding Service
+
+- Unit tests should cover model-backed embeddings, fallback embeddings, authenticity response shape, unavailable model handling, and invalid input handling.
+- Current evidence: Python tests cover health, fallback response shape, mocked transformer response shape, 384 dimensions, fallback determinism, finite normalized output, fallback mode identification, authenticity score bounds, nullable image authenticity, and empty input rejection.
+
+## React Native Component and Integration Behavior
+
+- Component or integration tests should cover feed loading, post card fields, relative time, reaction button states, infinite scrolling, inline search results, empty state, error state, and retry behavior.
+
+## Optional Expo Web Smoke Verification
+
+- If Expo Web is used for smoke verification, verify the feed screen renders, loading/empty/error states are visible, search can be entered, and repeated pagination does not duplicate rows.
+
+## Clean-Start Reproducibility
+
+- Future README instructions should support install, environment configuration, database startup, migrations, seeds, backend API, Python embedding service, mobile app, and tests from a clean checkout.

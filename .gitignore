@@ -1,0 +1,66 @@
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# PHP / Laravel
+vendor/
+storage/*.key
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
+storage/logs/
+bootstrap/cache/*.php
+
+# Node / Expo
+node_modules/
+.expo/
+.expo-shared/
+dist/
+build/
+web-build/
+.metro-cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+embedding-service/.cache/
+embedding-service/models/
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+.coverage.*
+
+# Local logs
+logs/
+*.log
+
+# IDE and OS noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Generated build artifacts
+*.sqlite
+*.sqlite3
+*.apk
+*.aab
+*.ipa
+*.pyz
+*.egg-info/
