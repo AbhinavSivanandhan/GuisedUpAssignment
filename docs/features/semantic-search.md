@@ -10,7 +10,7 @@ US-01, US-04, US-05, US-17, US-19, US-22, US-23, US-28, US-29.
 
 ## User-Visible Behavior
 
-The user enters a natural-language query in the feed screen search bar and sees up to 10 inline search results. Non-contractual design example: a query such as `funny travel stories from last week` should match semantically relevant posts and apply a documented last-week date range.
+The user enters a natural-language query in the feed screen search bar and sees up to 10 inline search results. A query such as `funny travel stories from last week` should match semantically relevant posts and apply a documented last-week date range.
 
 ## API Contract
 
@@ -18,7 +18,7 @@ The user enters a natural-language query in the feed screen search bar and sees 
 
 Validation: `q` is required, string, trimmed, and non-empty.
 
-Success: `200 OK` with at most 10 results, stable ordering, and metadata for applied temporal filters when present.
+Success: `200 OK` with at most 10 results, stable ordering, author information, post text, optional image URL, creation time, similarity score, embedding mode, and metadata for applied temporal filters when present.
 
 Failures: `401` unauthenticated, `422` invalid query, `503` embedding service unavailable when no fallback can be used.
 
@@ -33,7 +33,7 @@ Read-only. Uses query embeddings compared with `posts.embedding vector(384)`, op
 - Return a maximum of 10 results.
 - Match semantic meaning rather than SQL keywords.
 - Extract temporal intent and apply it as a structured date filter.
-- Non-contractual design example: for `funny travel stories from last week`, embed the semantic topic and apply a last-week `created_at` range.
+- For `funny travel stories from last week`, embed the semantic topic and apply a trailing seven-day `created_at` range for `last week`.
 - Use stable result ordering, such as similarity descending, `created_at DESC`, `id DESC`.
 - Do not degrade silently into keyword search.
 - Deterministic fallback results must be labeled as approximate and not genuine semantic search.
@@ -63,9 +63,9 @@ Laravel tests for validation, maximum 10 results, vector-search path, no keyword
 
 ## Explicit Non-Goals
 
-- Full natural-language date parser.
+- Full natural-language date parser beyond the documented `last week` rule.
 - Keyword-only search.
-- Runtime implementation in this documentation batch.
+- React Native search UI implementation.
 
 ## Definition of Done
 
@@ -74,5 +74,6 @@ The feature is done only when authenticated semantic search returns up to 10 vec
 ## Current Implementation Status
 
 - Specified/documented.
-- Not implemented.
-- Not runtime-verified.
+- Implemented for `GET /api/search` in `api/`.
+- Runtime-verified by Laravel feature tests covering authentication, validation, semantic ranking order, maximum 10 results, empty results, embedding-service failure behavior, and `last week` temporal filtering.
+- PostgreSQL pgvector execution was verified with a rolled-back `posts.embedding <=> query_vector` query.

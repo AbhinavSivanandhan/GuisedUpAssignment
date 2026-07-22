@@ -1,12 +1,12 @@
 # Testing Strategy
 
-Backend tests now exist for implemented post creation, feed ranking, and interaction behavior. Laravel feature tests and Python embedding-service tests have been run in Docker. Semantic search, React Native, SQL, deployment, and video verification remain future work. The strategy prioritizes critical flows and does not require exhaustive TDD.
+Backend tests now exist for implemented post creation, feed ranking, semantic search, and interaction behavior. Laravel feature tests and Python embedding-service tests have been run in Docker. React Native, SQL, deployment, and video verification remain future work. The strategy prioritizes critical flows and does not require exhaustive TDD.
 
 ## Sanctum Authentication
 
 - Feature tests should reject unauthenticated requests to `POST /api/posts`, `GET /api/feed`, `GET /api/search`, and `POST /api/interactions`.
 - Feature tests should accept valid Sanctum bearer tokens and scope user-specific behavior to the authenticated user.
-- Current evidence: implemented tests cover unauthenticated `POST /api/posts`, `GET /api/feed`, and `POST /api/interactions`; search is deferred.
+- Current evidence: implemented tests cover unauthenticated `POST /api/posts`, `GET /api/feed`, `GET /api/search`, and `POST /api/interactions`.
 
 ## Post Creation
 
@@ -66,11 +66,13 @@ final_score =
 - Verify query embedding and cosine similarity are used.
 - Verify search returns at most 10 results.
 - Verify search does not silently degrade to keyword search.
+- Current evidence: implemented Laravel tests cover unauthenticated rejection, query validation, semantic ranking order through vector cosine similarity, 10-result limiting, empty results, and embedding-service failure behavior.
 
 ## Temporal-Intent Filtering
 
 - Verify a natural-language query with temporal intent applies semantic retrieval and the documented date range.
 - Verify the response exposes or documents the applied temporal filter.
+- Current evidence: implemented Laravel tests cover `funny travel stories from last week` with a trailing seven-day `created_at` filter and response metadata for the parsed temporal filter.
 
 ## Interaction Validation and Persistence
 

@@ -68,7 +68,7 @@ Uncreated directories below are proposed, not present. Create them only in a bat
 
 ## Directory Responsibilities
 
-- `/api/`: Laravel API. Owns authentication, validation, orchestration, implemented post/feed/interaction endpoints, persistence, ranking, pagination, and API responses. Semantic search remains deferred.
+- `/api/`: Laravel API. Owns authentication, validation, orchestration, implemented post/feed/search/interaction endpoints, persistence, ranking, pagination, semantic-search orchestration, and API responses.
 - `/apps/api/`: Earlier documented conceptual path for the Laravel API; do not create a duplicate while `/api/` is the implemented location.
 - `/apps/mobile/`: Expo React Native TypeScript app. Owns presentation and client interactions.
 - `/embedding-service/`: Python FastAPI embedding service. Owns embedding generation and explainable authenticity analysis.

@@ -4,7 +4,7 @@
 
 Source of truth: `Assignment.md`, the frozen implementation contract and complete assessment transcription. The original assessment PDF remains the external requirement authority for audit traceability and includes additional product/evaluation phrasing preserved in this roadmap.
 
-The current workspace contains `Assignment.md`, this roadmap, repository governance, workspace documentation, the TSD, architecture documentation, testing strategy, AI usage documentation, an ADR, feature specifications, a Laravel API foundation, a Python FastAPI embedding service, Docker Compose configuration, a README, an environment example, migrations, seeders, `GET /api/feed`, and focused backend tests. It does not contain the Expo mobile app, semantic-search endpoint, SQL submission, deployment artifacts, final submission, or video. Therefore:
+The current workspace contains `Assignment.md`, this roadmap, repository governance, workspace documentation, the TSD, architecture documentation, testing strategy, AI usage documentation, an ADR, feature specifications, a Laravel API foundation, a Python FastAPI embedding service, Docker Compose configuration, a README, an environment example, migrations, seeders, `GET /api/feed`, `GET /api/search`, and focused backend tests. It does not contain the Expo mobile app, SQL submission, deployment artifacts, final submission, or video. Therefore:
 
 - This roadmap organizes and traces the requirements in `Assignment.md` and the original assessment PDF.
 - A roadmap item may not weaken or contradict `Assignment.md` or the original assessment PDF.
@@ -14,6 +14,7 @@ The current workspace contains `Assignment.md`, this roadmap, repository governa
 - Any roadmap item that is not directly traceable to `Assignment.md` is planning guidance only, unless later approved through a contract-compliant amendment.
 - Verified assessment-weighted progress before US-18 implementation was approximately 52%, based only on audited evidence: TSD/documentation 25/25, backend foundation about 12/25, React Native 0/20, SQL 0/15, AI usage 15/15.
 - Verified assessment-weighted progress after US-18 implementation is approximately 57%, based on the same evidence plus `GET /api/feed`, focused feed-ranking tests, route verification, and API image build verification.
+- Verified assessment-weighted progress after US-19 implementation is approximately 62%, based on the same evidence plus `GET /api/search`, focused search tests, route verification, Docker image builds, and PostgreSQL pgvector operator verification.
 
 ## 2. Definition of success
 
@@ -161,7 +162,7 @@ Status and evidence:
 
 - Status: Documentation complete for this story.
 - Evidence: `docs/TSD.md` sections 15 and 16 document all required endpoints, request/response shapes, Sanctum authentication, post creation, feed pagination, search, and interaction logging.
-- Implementation status: Documentation complete. `POST /api/posts`, `GET /api/feed`, and `POST /api/interactions` are implemented and tested; `GET /api/search` remains missing.
+- Implementation status: Documentation complete. `POST /api/posts`, `GET /api/feed`, `GET /api/search`, and `POST /api/interactions` are implemented and tested.
 
 #### US-06 — Specify the feed-ranking algorithm
 
@@ -261,9 +262,9 @@ Contributes to DEL-02.
 
 Status and evidence:
 
-- Status: Implemented for `POST /api/posts`, `GET /api/feed`, and `POST /api/interactions`; `GET /api/search` remains deferred.
-- Evidence: `api/routes/api.php` protects `POST /api/posts`, `GET /api/feed`, and `POST /api/interactions` with `auth:sanctum`; `api/app/Http/Controllers/AuthTokenController.php` provides a local token helper; `api/tests/Feature/PostCreationTest.php`, `api/tests/Feature/FeedRankingTest.php`, and `api/tests/Feature/InteractionCreationTest.php` verify `401` for unauthenticated implemented endpoints.
-- Verification: Laravel feature tests passed: 17 tests, 50 assertions.
+- Status: Implemented for `POST /api/posts`, `GET /api/feed`, `GET /api/search`, and `POST /api/interactions`.
+- Evidence: `api/routes/api.php` protects `POST /api/posts`, `GET /api/feed`, `GET /api/search`, and `POST /api/interactions` with `auth:sanctum`; `api/app/Http/Controllers/AuthTokenController.php` provides a local token helper; `api/tests/Feature/PostCreationTest.php`, `api/tests/Feature/FeedRankingTest.php`, `api/tests/Feature/SearchTest.php`, and `api/tests/Feature/InteractionCreationTest.php` verify `401` for unauthenticated implemented endpoints.
+- Verification: Laravel feature tests passed: 24 tests, 74 assertions.
 
 #### US-11 — Seed test identities
 
@@ -313,7 +314,7 @@ Contributes to DEL-02 and DEL-05.
 
 Status and evidence:
 
-- Status: Implemented and tested for post creation persistence; feed and search use remain deferred.
+- Status: Implemented and tested for post creation persistence; feed and search use are now implemented separately in US-18 and US-19.
 - Evidence: `api/app/Models/Post.php`, `api/database/migrations/2026_07_22_000100_create_posts_table.php`, `api/app/Http/Controllers/PostController.php`, and `api/tests/Feature/PostCreationTest.php`.
 - Verification: Laravel post-creation feature tests passed.
 
@@ -371,12 +372,6 @@ Contributes to DEL-02.
 Status and evidence:
 
 - Status: Implemented and tested.
-- Evidence: `api/routes/api.php`, `api/app/Http/Controllers/FeedController.php`, `api/app/Http/Requests/FeedRequest.php`, `api/config/feed.php`, `api/app/Services/Feed/FeedCandidateRepository.php`, `api/app/Services/Feed/EloquentFeedCandidateRepository.php`, `api/app/Services/Feed/FeedRanker.php`, `api/app/Services/Feed/WeightedFeedRanker.php`, `api/app/Services/Feed/FeedScore.php`, `api/app/Services/Feed/VectorMath.php`, and `api/tests/Feature/FeedRankingTest.php`.
-- Verification: Laravel feature tests passed: 17 tests, 50 assertions. `php artisan route:list` shows `GET|HEAD api/feed`. Tests verify unauthenticated rejection, 20-post page size, pagination metadata, authenticity signal ordering, authenticated-user relationship-depth ordering, semantic-similarity ordering, time-decay ordering, and stable ordering.
-
-Status and evidence:
-
-- Status: Implemented and tested.
 - Evidence: `api/routes/api.php`, `api/app/Http/Controllers/PostController.php`, `api/app/Http/Requests/StorePostRequest.php`, `api/app/Http/Resources/PostResource.php`, `api/app/Services/HttpEmbeddingClient.php`, and `api/tests/Feature/PostCreationTest.php`.
 - Verification: Laravel post-creation feature tests passed, including auth rejection, validation, successful persistence, malformed embedding rejection, and service-failure handling without partial persistence.
 
@@ -415,6 +410,12 @@ Acceptance criteria:
 
 Contributes to DEL-02.
 
+Status and evidence:
+
+- Status: Implemented and tested.
+- Evidence: `api/routes/api.php`, `api/app/Http/Controllers/FeedController.php`, `api/app/Http/Requests/FeedRequest.php`, `api/config/feed.php`, `api/app/Services/Feed/FeedCandidateRepository.php`, `api/app/Services/Feed/EloquentFeedCandidateRepository.php`, `api/app/Services/Feed/FeedRanker.php`, `api/app/Services/Feed/WeightedFeedRanker.php`, `api/app/Services/Feed/FeedScore.php`, `api/app/Services/Feed/VectorMath.php`, and `api/tests/Feature/FeedRankingTest.php`.
+- Verification: Laravel feature tests passed: 24 tests, 74 assertions. `php artisan route:list` shows `GET|HEAD api/feed`. Tests verify unauthenticated rejection, 20-post page size, pagination metadata, authenticity signal ordering, authenticated-user relationship-depth ordering, semantic-similarity ordering, time-decay ordering, and stable ordering.
+
 #### US-19 — Search posts with natural language
 
 As a user, I want to search conversationally so that I can find meaningfully related posts without exact keywords.
@@ -428,6 +429,12 @@ Acceptance criteria:
 - Validate empty or invalid queries and return the documented response shape.
 
 Contributes to DEL-02.
+
+Status and evidence:
+
+- Status: Implemented and tested.
+- Evidence: `api/routes/api.php`, `api/config/search.php`, `api/app/Http/Controllers/SearchController.php`, `api/app/Http/Requests/SearchRequest.php`, `api/app/Http/Resources/SearchResultResource.php`, `api/app/Services/Search/PostSearch.php`, `api/app/Services/Search/EmbeddingPostSearch.php`, `api/app/Services/Search/SearchCandidateRepository.php`, `api/app/Services/Search/EloquentSearchCandidateRepository.php`, `api/app/Services/Search/SearchSimilarityCalculator.php`, `api/app/Services/Search/CosineSearchSimilarityCalculator.php`, `api/app/Services/Search/TemporalIntentParser.php`, `api/app/Services/Search/SimpleTemporalIntentParser.php`, `api/app/Services/Search/SearchIntent.php`, `api/app/Services/Search/SearchResults.php`, and `api/tests/Feature/SearchTest.php`.
+- Verification: Laravel feature tests passed: 24 tests, 74 assertions. `php artisan route:list` shows `GET|HEAD api/search`. Search tests verify unauthenticated rejection, query validation, semantic vector ranking order, maximum 10 results, empty results, embedding-service failure behavior, and `funny travel stories from last week` temporal handling with a trailing seven-day date filter. PostgreSQL pgvector execution was verified with a rolled-back `posts.embedding <=> query_vector` query returning similarity score `1` for an identical vector.
 
 #### US-20 — Log feed interactions
 
@@ -463,8 +470,8 @@ Contributes to DEL-02 and the 25% Backend Quality score.
 
 Status and evidence:
 
-- Status: Implemented for current backend scope; semantic search remains deferred.
-- Evidence: Controllers delegate validation to form requests; embedding work uses `EmbeddingClient`; feed ranking uses `FeedCandidateRepository` and `FeedRanker`; ranking weights live in `api/config/feed.php`; response resources keep API output separate; migrations and models preserve persistence boundaries.
+- Status: Implemented for current backend scope; mobile and SQL remain deferred.
+- Evidence: Controllers delegate validation to form requests; embedding work uses `EmbeddingClient`; feed ranking uses `FeedCandidateRepository` and `FeedRanker`; search uses `PostSearch`, `SearchCandidateRepository`, `SearchSimilarityCalculator`, and `TemporalIntentParser`; ranking and search limits live in configuration; response resources keep API output separate; migrations and models preserve persistence boundaries.
 - Verification: Laravel and Python tests passed for implemented behavior.
 
 #### US-22 — Test the most critical logic
@@ -481,9 +488,9 @@ Completes DEL-06 and contributes to DEL-02.
 
 Status and evidence:
 
-- Status: Implemented for post, feed, interaction, and embedding-service scope; semantic search and mobile tests remain deferred.
-- Evidence: `api/tests/Feature/PostCreationTest.php`, `api/tests/Feature/FeedRankingTest.php`, `api/tests/Feature/InteractionCreationTest.php`, `embedding-service/tests/test_core.py`, and `embedding-service/tests/test_api.py`.
-- Verification: Laravel feature tests passed: 17 tests, 50 assertions. Python tests passed: 9 tests.
+- Status: Implemented for post, feed, semantic-search, interaction, and embedding-service scope; mobile tests remain deferred.
+- Evidence: `api/tests/Feature/PostCreationTest.php`, `api/tests/Feature/FeedRankingTest.php`, `api/tests/Feature/SearchTest.php`, `api/tests/Feature/InteractionCreationTest.php`, `embedding-service/tests/test_core.py`, and `embedding-service/tests/test_api.py`.
+- Verification: Laravel feature tests passed: 24 tests, 74 assertions. Python tests passed: 9 tests.
 
 #### US-23 — Validate backend reproducibility
 
@@ -499,9 +506,9 @@ Completes DEL-02 when US-09 through US-22 are also accepted.
 
 Status and evidence:
 
-- Status: Partially verified. Docker builds, migrations, post/feed/interaction endpoints, and tests were verified. Full four-endpoint clean-start cannot be complete until search is implemented.
+- Status: Partially verified. Docker builds, migrations, post/feed/search/interaction endpoints, route registration, and tests were verified. Full clean-start verification from a fresh checkout and full Docker HTTP exercise of all endpoints remain outstanding.
 - Evidence: `docker-compose.yml`, `api/Dockerfile`, `embedding-service/Dockerfile`, `.env.example`, and `README.md`.
-- Verification: Docker images built; PostgreSQL 16 pgvector service migrated successfully; `vector` extension confirmed. `GET /api/feed` is implemented and route-verified. `GET /api/search` remains deferred.
+- Verification: Docker images built; PostgreSQL 16 pgvector service migrated successfully; `vector` extension confirmed. `GET /api/feed` and `GET /api/search` are implemented and route-verified. PostgreSQL pgvector execution was verified with a rolled-back `posts.embedding <=> query_vector` query.
 
 ### Phase 3 — React Native Feed Screen
 

@@ -1,6 +1,6 @@
 # Guised Up Real Connections Feed
 
-This repository is a take-home assessment implementation in progress. The current foundation implements the Laravel API base, PostgreSQL/pgvector schema, Sanctum-protected post creation, personalized feed retrieval, interaction creation, a Python FastAPI embedding/authenticity service, Docker Compose configuration, and focused tests.
+This repository is a take-home assessment implementation in progress. The current foundation implements the Laravel API base, PostgreSQL/pgvector schema, Sanctum-protected post creation, personalized feed retrieval, semantic search, interaction creation, a Python FastAPI embedding/authenticity service, Docker Compose configuration, and focused tests.
 
 ## Implemented In This Foundation
 
@@ -9,12 +9,12 @@ This repository is a take-home assessment implementation in progress. The curren
 - Docker Compose services for API, PostgreSQL 16 with pgvector, and embedding service.
 - Migrations for `users`, `personal_access_tokens`, `posts`, and `interactions`.
 - Sanctum token endpoint: `POST /api/tokens`.
-- Protected endpoints: `POST /api/posts`, `GET /api/feed`, and `POST /api/interactions`.
+- Protected endpoints: `POST /api/posts`, `GET /api/feed`, `GET /api/search`, and `POST /api/interactions`.
 - Deterministic hash embedding fallback for tests and unavailable model downloads.
 
 ## Deferred
 
-`GET /api/search`, the Expo React Native app, SQL challenge answers, hosted deployment, final submission, and explanation video are not implemented yet.
+The Expo React Native app, SQL challenge answers, hosted deployment, final submission, and explanation video are not implemented yet.
 
 ## Prerequisites
 
@@ -113,6 +113,15 @@ curl http://localhost:8000/api/feed?page=1 \
 
 The feed returns 20 posts per page when available. Ranking combines normalized authenticity, relationship depth from the authenticated user's interactions, semantic similarity from embeddings, and exponential time decay. Global likes, shares, comments, follower totals, and popularity metrics are not ranking inputs.
 
+## Search Posts
+
+```bash
+curl "http://localhost:8000/api/search?q=funny%20travel%20stories%20from%20last%20week" \
+  -H "Authorization: Bearer <token>"
+```
+
+Search embeds the query through the embedding-service boundary and ranks posts by vector cosine similarity. PostgreSQL uses pgvector for similarity search. SQLite feature tests use a database-independent cosine path behind the same search repository boundary. Results return at most 10 posts with author information, post text, optional image URL, creation time, similarity score, embedding mode, and any parsed temporal filter. The phrase `last week` is currently interpreted as a trailing seven-day `created_at` filter.
+
 ## Tests
 
 Laravel tests:
@@ -142,12 +151,14 @@ The fallback uses stable SHA-256 hashing, not Python's randomized `hash()`. It r
 ## Verification Status
 
 - Docker images for `api` and `embedding-service` were built successfully.
-- Laravel feature tests passed: 17 tests, 50 assertions.
+- Laravel feature tests passed: 24 tests, 74 assertions.
 - Python embedding-service tests passed: 9 tests.
 - PostgreSQL migration verification against `pgvector/pgvector:pg16` passed with the `vector` extension enabled. Host port 5432 was already allocated locally, so verification used `DB_PORT_FORWARD=55432`.
+- A rolled-back PostgreSQL check executed `posts.embedding <=> query_vector` and returned a similarity score of `1` for an identical 384-dimensional vector.
 
 ## Known Limitations
 
 - Full clean-start verification from a fresh checkout still has to be repeated in the target environment.
 - The transformer model path is configured but optional dependencies and model download are not claimed verified until they are installed and run successfully.
-- Semantic search, mobile UI, SQL answers, deployment, and video remain deferred.
+- The semantic search implementation currently supports only a small explicit temporal parser for `last week`; broader natural-language date parsing remains deferred.
+- Mobile UI, SQL answers, deployment, and video remain deferred.
