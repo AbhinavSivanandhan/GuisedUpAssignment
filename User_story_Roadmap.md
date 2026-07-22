@@ -4,17 +4,18 @@
 
 Source of truth: `Assignment.md`, the frozen implementation contract and complete assessment transcription. The original assessment PDF remains the external requirement authority for audit traceability and includes additional product/evaluation phrasing preserved in this roadmap.
 
-The current workspace contains `Assignment.md`, this roadmap, repository governance, workspace documentation, the TSD, architecture documentation, testing strategy, AI usage documentation, an ADR, feature specifications, a Laravel API foundation, a Python FastAPI embedding service, Docker Compose configuration, a README, an environment example, migrations, seeders, `GET /api/feed`, `GET /api/search`, and focused backend tests. It does not contain the Expo mobile app, SQL submission, deployment artifacts, final submission, or video. Therefore:
+The current workspace contains `Assignment.md`, this roadmap, repository governance, workspace documentation, the TSD, architecture documentation, testing strategy, AI usage documentation, an ADR, feature specifications, a Laravel API foundation, a Python FastAPI embedding service, Docker Compose configuration, a README, an environment example, migrations, seeders, `GET /api/feed`, `GET /api/search`, `sql/queries.sql`, and focused backend tests. It does not contain the Expo mobile app, deployment artifacts, final submission, or video. Therefore:
 
 - This roadmap organizes and traces the requirements in `Assignment.md` and the original assessment PDF.
 - A roadmap item may not weaken or contradict `Assignment.md` or the original assessment PDF.
 - Application implementation compliance is verified only for the backend foundation evidence listed below.
 - Documentation-only evidence may be recorded below when a document directly satisfies a documentation acceptance criterion.
-- Application stories remain `Unverified / not evidenced` until their acceptance criteria can be demonstrated in the submission repository; partial backend stories below are documented separately from deferred feed, search, mobile, SQL, deployment, and video work.
+- Application stories remain `Unverified / not evidenced` until their acceptance criteria can be demonstrated in the submission repository; partial backend stories below are documented separately from deferred mobile, deployment, and video work.
 - Any roadmap item that is not directly traceable to `Assignment.md` is planning guidance only, unless later approved through a contract-compliant amendment.
 - Verified assessment-weighted progress before US-18 implementation was approximately 52%, based only on audited evidence: TSD/documentation 25/25, backend foundation about 12/25, React Native 0/20, SQL 0/15, AI usage 15/15.
 - Verified assessment-weighted progress after US-18 implementation is approximately 57%, based on the same evidence plus `GET /api/feed`, focused feed-ranking tests, route verification, and API image build verification.
 - Verified assessment-weighted progress after US-19 implementation is approximately 62%, based on the same evidence plus `GET /api/search`, focused search tests, route verification, Docker image builds, and PostgreSQL pgvector operator verification.
+- Verified assessment-weighted progress after the SQL challenge implementation is approximately 77%, based on the same evidence plus `sql/queries.sql`, PostgreSQL execution of D1 through D4 with rolled-back fixtures, `EXPLAIN` output, and rollback cleanup verification.
 
 ## 2. Definition of success
 
@@ -123,7 +124,7 @@ Status and evidence:
 
 - Status: Documentation complete for this story.
 - Evidence: `docs/TSD.md` sections 9 and 10 document tables, relationships, indexes, and SQL challenge support.
-- Implementation status: Documentation complete. Migrations now exist and were runtime-verified in the backend foundation audit; SQL challenge queries remain unimplemented.
+- Implementation status: Documentation complete. Migrations now exist and were runtime-verified in the backend foundation audit; SQL challenge queries now exist in `sql/queries.sql` and were PostgreSQL-verified.
 
 #### US-04 — Document embeddings and vector storage
 
@@ -333,7 +334,7 @@ Contributes to DEL-02 and DEL-05.
 
 Status and evidence:
 
-- Status: Implemented and tested for raw interaction persistence; relationship-depth scoring remains deferred with feed ranking.
+- Status: Implemented and tested for raw interaction persistence; relationship-depth scoring is implemented in feed ranking and raw SQL reporting use is verified by the SQL challenge.
 - Evidence: `api/app/Models/Interaction.php`, `api/database/migrations/2026_07_22_000200_create_interactions_table.php`, `api/app/Http/Controllers/InteractionController.php`, and `api/tests/Feature/InteractionCreationTest.php`.
 - Verification: Laravel interaction feature tests passed, including repeated raw interaction preservation.
 
@@ -470,7 +471,7 @@ Contributes to DEL-02 and the 25% Backend Quality score.
 
 Status and evidence:
 
-- Status: Implemented for current backend scope; mobile and SQL remain deferred.
+- Status: Implemented for current backend and SQL scope; mobile, deployment, final submission, and video remain deferred.
 - Evidence: Controllers delegate validation to form requests; embedding work uses `EmbeddingClient`; feed ranking uses `FeedCandidateRepository` and `FeedRanker`; search uses `PostSearch`, `SearchCandidateRepository`, `SearchSimilarityCalculator`, and `TemporalIntentParser`; ranking and search limits live in configuration; response resources keep API output separate; migrations and models preserve persistence boundaries.
 - Verification: Laravel and Python tests passed for implemented behavior.
 
@@ -618,6 +619,12 @@ Acceptance criteria:
 
 Contributes to DEL-04.
 
+Status and evidence:
+
+- Status: Implemented and PostgreSQL-verified.
+- Evidence: `sql/queries.sql` D1.
+- Verification: Executed against Docker PostgreSQL with rolled-back fixtures. Result returned the two within-window fixture users, ordered by `total_activity DESC` with deterministic tie resolution; the user with 20 interactions outside seven days was excluded. `EXPLAIN` was run.
+
 #### US-32 — Write D2: posts from strongest relationships
 
 As an analyst, I want recent posts from the people a given user interacts with most so that relationship depth can be inspected.
@@ -632,6 +639,12 @@ Acceptance criteria:
 
 Contributes to DEL-04.
 
+Status and evidence:
+
+- Status: Implemented and PostgreSQL-verified.
+- Evidence: `sql/queries.sql` D2.
+- Verification: Executed with `-v user_id=900001` against Docker PostgreSQL with rolled-back fixtures. Result returned posts by authors the supplied user interacted with, ordered by interaction frequency and deterministic tie rules; the author post outside 30 days was excluded. `EXPLAIN` was run and showed use of `interactions_user_id_post_id_type_index`, `posts_pkey`, `posts_user_id_created_at_index`, and `users_pkey`.
+
 #### US-33 — Write D3: high-view, zero-reaction posts
 
 As an analyst, I want posts with many views and no reactions so that content behavior can be examined.
@@ -645,6 +658,12 @@ Acceptance criteria:
 
 Contributes to DEL-04.
 
+Status and evidence:
+
+- Status: Implemented and PostgreSQL-verified.
+- Evidence: `sql/queries.sql` D3.
+- Verification: Executed against Docker PostgreSQL with rolled-back fixtures. Result returned only the 101-view, zero-reaction fixture post; the exactly-100-view post and the post with a reaction were excluded. `EXPLAIN` was run.
+
 #### US-34 — Write D4: potential posting spam
 
 As a trust-and-safety reviewer, I want users posting excessively so that potential spam can be investigated.
@@ -656,6 +675,12 @@ Acceptance criteria:
 - Return their email and post count.
 
 Completes DEL-04 when all four queries are placed in `/sql/queries.sql`; supports the 15% SQL score.
+
+Status and evidence:
+
+- Status: Implemented and PostgreSQL-verified.
+- Evidence: `sql/queries.sql` D4.
+- Verification: Executed against Docker PostgreSQL with rolled-back fixtures. Result returned only the user with 21 posts in the last 24 hours; the exactly-20-post user and the user with 21 posts older than 24 hours were excluded. `EXPLAIN` was run and showed use of `posts_created_at_index`.
 
 ### Phase 5 — Documentation, evidence, and submission
 

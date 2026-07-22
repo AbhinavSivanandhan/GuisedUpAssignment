@@ -2,7 +2,7 @@
 
 ## 1. Document Status
 
-This Technical Solution Document was prepared before application code. It has now been reconciled with the backend foundation, feed implementation, and semantic-search implementation. Laravel post, feed, search, and interaction endpoints, PostgreSQL/pgvector migrations, Sanctum token authentication, Docker Compose configuration, Python embedding/authenticity service, README, `.env.example`, and focused tests exist. Expo mobile, SQL challenge answers, deployment, final submission, and video remain deferred.
+This Technical Solution Document was prepared before application code. It has now been reconciled with the backend foundation, feed implementation, semantic-search implementation, and SQL challenge implementation. Laravel post, feed, search, and interaction endpoints, PostgreSQL/pgvector migrations, Sanctum token authentication, Docker Compose configuration, Python embedding/authenticity service, README, `.env.example`, SQL challenge answers, and focused tests exist. Expo mobile, deployment, final submission, and video remain deferred.
 
 ## 2. Requirement Sources and Authority
 
@@ -264,7 +264,7 @@ Interactions are raw events with type `view`, `reply`, or `reaction`. They suppo
 
 ## 25. Testing Strategy
 
-Focused backend tests now cover Sanctum-protected post creation, feed retrieval, semantic search, and interaction logging; validation; persistence; malformed embedding responses; embedding-service failure behavior; repeated raw interactions; deterministic fallback; embedding dimensions; mocked transformer shape; authenticity score bounds; nullable image authenticity; health; invalid input; all four feed-ranking signals; stable ordering; 20-per-page feed pagination; search ranking order; search result limit; empty search results; and `last week` temporal filtering. Mobile, SQL, deployment, and video tests remain deferred.
+Focused backend tests now cover Sanctum-protected post creation, feed retrieval, semantic search, and interaction logging; validation; persistence; malformed embedding responses; embedding-service failure behavior; repeated raw interactions; deterministic fallback; embedding dimensions; mocked transformer shape; authenticity score bounds; nullable image authenticity; health; invalid input; all four feed-ranking signals; stable ordering; 20-per-page feed pagination; search ranking order; search result limit; empty search results; and `last week` temporal filtering. SQL challenge queries were verified against PostgreSQL with rolled-back fixtures. Mobile, deployment, and video tests remain deferred.
 
 ## 26. Security and Privacy
 
@@ -276,7 +276,7 @@ The implementation should log embedding service failures, fallback activation, i
 
 ## 28. AI-Agentic Tools Actually Used
 
-Codex has been used for requirements traceability, repository governance preparation, architecture documentation, TSD drafting, feature-specification drafting, documentation consistency review, roadmap evidence synchronization, Laravel foundation implementation, PostgreSQL/pgvector schema implementation, Python embedding-service implementation, post/feed/search/interaction endpoint implementation, automated-test creation, and documentation synchronization. No mobile app, SQL answers, deployment, hosted repository configuration, final submission, or video generation has been performed.
+Codex has been used for requirements traceability, repository governance preparation, architecture documentation, TSD drafting, feature-specification drafting, documentation consistency review, roadmap evidence synchronization, Laravel foundation implementation, PostgreSQL/pgvector schema implementation, Python embedding-service implementation, post/feed/search/interaction endpoint implementation, SQL challenge implementation, automated-test creation, and documentation synchronization. No mobile app, deployment, hosted repository configuration, final submission, or video generation has been performed.
 
 ## 29. Trade-Offs
 
@@ -300,6 +300,7 @@ Codex has been used for requirements traceability, repository governance prepara
 - Semantic search uses vector similarity and supports the documented `last week` filter, but broader temporal parsing remains intentionally limited.
 - Docker clean-start was partially verified through image builds, Laravel tests, Python tests, and PostgreSQL migrations; full reviewer-machine reproducibility still requires an external clean checkout/run.
 - A rolled-back PostgreSQL verification executed the pgvector cosine-distance operator against `posts.embedding`; a full end-to-end HTTP search against Docker PostgreSQL was not separately run.
+- SQL challenge queries were executed with rolled-back PostgreSQL fixtures and explained with `EXPLAIN`; no performance benchmark was performed.
 
 ## 32. Traceability to US-00 through US-08
 
@@ -315,4 +316,4 @@ Codex has been used for requirements traceability, repository governance prepara
 
 ## 33. Deferred Implementation
 
-Deferred work includes Expo mobile implementation, SQL challenge answers, full clean-start verification from a fresh checkout, private repository publishing, final submission, and explanation video.
+Deferred work includes Expo mobile implementation, full clean-start verification from a fresh checkout, private repository publishing, final submission, and explanation video.

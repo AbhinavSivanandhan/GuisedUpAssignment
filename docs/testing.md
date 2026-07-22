@@ -1,6 +1,6 @@
 # Testing Strategy
 
-Backend tests now exist for implemented post creation, feed ranking, semantic search, and interaction behavior. Laravel feature tests and Python embedding-service tests have been run in Docker. React Native, SQL, deployment, and video verification remain future work. The strategy prioritizes critical flows and does not require exhaustive TDD.
+Backend tests now exist for implemented post creation, feed ranking, semantic search, and interaction behavior. Laravel feature tests and Python embedding-service tests have been run in Docker. SQL challenge queries have been executed against PostgreSQL with rolled-back fixtures. React Native, deployment, and video verification remain future work. The strategy prioritizes critical flows and does not require exhaustive TDD.
 
 ## Sanctum Authentication
 
@@ -89,6 +89,14 @@ final_score =
 ## React Native Component and Integration Behavior
 
 - Component or integration tests should cover feed loading, post card fields, relative time, reaction button states, infinite scrolling, inline search results, empty state, error state, and retry behavior.
+
+## SQL Challenge Verification
+
+- D1 should count raw `view`, `reply`, and `reaction` events from `interactions` during the trailing seven days and order deterministic ties.
+- D2 should use an obvious supplied `user_id`, count that user's interactions with post authors, return posts from the trailing 30 days, and order by interaction frequency without join multiplication.
+- D3 should return only posts with more than 100 views and zero reactions, excluding exactly 100 views and any reacted post.
+- D4 should return users with more than 20 posts during the trailing 24 hours, excluding exactly 20 posts and posts outside the window.
+- Current evidence: `sql/queries.sql` was executed against Docker PostgreSQL with representative fixture data inserted inside transactions and rolled back. `EXPLAIN` was run for D1 through D4. D2 used `interactions_user_id_post_id_type_index`, `posts_pkey`, `posts_user_id_created_at_index`, and `users_pkey`; D4 used `posts_created_at_index`. D1 and D3 planned sequential scans on the tiny verification fixture, which is an observed plan, not a performance benchmark.
 
 ## Optional Expo Web Smoke Verification
 

@@ -1,6 +1,6 @@
 # Guised Up Real Connections Feed
 
-This repository is a take-home assessment implementation in progress. The current foundation implements the Laravel API base, PostgreSQL/pgvector schema, Sanctum-protected post creation, personalized feed retrieval, semantic search, interaction creation, a Python FastAPI embedding/authenticity service, Docker Compose configuration, and focused tests.
+This repository is a take-home assessment implementation in progress. The current foundation implements the Laravel API base, PostgreSQL/pgvector schema, Sanctum-protected post creation, personalized feed retrieval, semantic search, interaction creation, raw SQL challenge answers, a Python FastAPI embedding/authenticity service, Docker Compose configuration, and focused tests.
 
 ## Implemented In This Foundation
 
@@ -10,11 +10,12 @@ This repository is a take-home assessment implementation in progress. The curren
 - Migrations for `users`, `personal_access_tokens`, `posts`, and `interactions`.
 - Sanctum token endpoint: `POST /api/tokens`.
 - Protected endpoints: `POST /api/posts`, `GET /api/feed`, `GET /api/search`, and `POST /api/interactions`.
+- Raw SQL challenge answers at `sql/queries.sql`.
 - Deterministic hash embedding fallback for tests and unavailable model downloads.
 
 ## Deferred
 
-The Expo React Native app, SQL challenge answers, hosted deployment, final submission, and explanation video are not implemented yet.
+The Expo React Native app, hosted deployment, final submission, and explanation video are not implemented yet.
 
 ## Prerequisites
 
@@ -144,6 +145,18 @@ PYTHONPATH=embedding-service python3 -m unittest discover -s embedding-service/t
 
 The tests use fallback mode or mocks and do not require downloading `sentence-transformers/all-MiniLM-L6-v2`. The default Docker image installs the FastAPI service and fallback path only. To exercise the transformer path later, install `embedding-service/requirements-optional-transformer.txt` in the embedding-service environment and set `EMBEDDING_MODE=transformer`.
 
+## SQL Challenge
+
+The raw SQL answers live in `sql/queries.sql`.
+
+D2 uses a psql variable for the supplied user id:
+
+```bash
+sed -n '1,220p' sql/queries.sql | docker compose exec -T db psql -U guised_up -d guised_up -v user_id=1
+```
+
+The queries are PostgreSQL-compatible and use `CURRENT_TIMESTAMP` for relative time windows. They were verified against the Docker PostgreSQL database with representative fixture data inserted inside transactions and rolled back.
+
 ## Deterministic Fallback
 
 The fallback uses stable SHA-256 hashing, not Python's randomized `hash()`. It returns exactly 384 finite numeric values and is labeled as `fallback`. It is test/failure infrastructure, not genuine semantic search.
@@ -155,10 +168,11 @@ The fallback uses stable SHA-256 hashing, not Python's randomized `hash()`. It r
 - Python embedding-service tests passed: 9 tests.
 - PostgreSQL migration verification against `pgvector/pgvector:pg16` passed with the `vector` extension enabled. Host port 5432 was already allocated locally, so verification used `DB_PORT_FORWARD=55432`.
 - A rolled-back PostgreSQL check executed `posts.embedding <=> query_vector` and returned a similarity score of `1` for an identical 384-dimensional vector.
+- `sql/queries.sql` was executed against PostgreSQL with rolled-back fixtures covering the D1 seven-day window, D2 30-day post window, D3 exactly-100-view and reaction exclusions, D4 exactly-20-post and old-post exclusions, and interaction-count ties.
 
 ## Known Limitations
 
 - Full clean-start verification from a fresh checkout still has to be repeated in the target environment.
 - The transformer model path is configured but optional dependencies and model download are not claimed verified until they are installed and run successfully.
 - The semantic search implementation currently supports only a small explicit temporal parser for `last week`; broader natural-language date parsing remains deferred.
-- Mobile UI, SQL answers, deployment, and video remain deferred.
+- Mobile UI, deployment, and video remain deferred.
