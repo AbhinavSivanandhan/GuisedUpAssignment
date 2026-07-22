@@ -74,7 +74,7 @@ Ranking tests for exact weights, normalized components, relationship depth rules
 
 - Learned ranking.
 - Global popularity ranking.
-- Runtime implementation in this documentation batch.
+- Implementing semantic search or mobile UI.
 
 ## Definition of Done
 
@@ -83,5 +83,6 @@ The feature is done only when `GET /api/feed` returns authenticated, ranked, sta
 ## Current Implementation Status
 
 - Specified/documented.
-- Not implemented.
-- Not runtime-verified.
+- Implemented for `GET /api/feed` in `api/`.
+- Runtime-verified by Laravel feature tests covering authentication, 20-per-page pagination, authenticity, relationship depth, semantic similarity, time decay, and stable ordering.
+- Ranking internals remain replaceable through explicit service boundaries.

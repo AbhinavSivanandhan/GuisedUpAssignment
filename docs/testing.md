@@ -1,12 +1,12 @@
 # Testing Strategy
 
-Backend foundation tests now exist for implemented behavior. Laravel feature tests and Python embedding-service tests have been run in Docker during the backend foundation step. Feed ranking, semantic search, React Native, SQL, deployment, and video verification remain future work. The strategy prioritizes critical flows and does not require exhaustive TDD.
+Backend tests now exist for implemented post creation, feed ranking, and interaction behavior. Laravel feature tests and Python embedding-service tests have been run in Docker. Semantic search, React Native, SQL, deployment, and video verification remain future work. The strategy prioritizes critical flows and does not require exhaustive TDD.
 
 ## Sanctum Authentication
 
 - Feature tests should reject unauthenticated requests to `POST /api/posts`, `GET /api/feed`, `GET /api/search`, and `POST /api/interactions`.
 - Feature tests should accept valid Sanctum bearer tokens and scope user-specific behavior to the authenticated user.
-- Current evidence: implemented tests cover unauthenticated `POST /api/posts` and `POST /api/interactions`; feed and search are deferred.
+- Current evidence: implemented tests cover unauthenticated `POST /api/posts`, `GET /api/feed`, and `POST /api/interactions`; search is deferred.
 
 ## Post Creation
 
@@ -44,6 +44,7 @@ final_score =
 - Verify all component scores are normalized to `0..1`.
 - Verify replies weigh more than reactions and reactions weigh more than views.
 - Verify relationship events use recency decay.
+- Current evidence: implemented Laravel tests cover authenticity, authenticated-user relationship depth, semantic similarity, and time decay ordering.
 
 ## Ranking Exclusions
 
@@ -57,6 +58,7 @@ final_score =
 - Verify `GET /api/feed` returns 20 posts per page when available.
 - Verify pagination metadata or links are present.
 - Verify stable behavior across pages.
+- Current evidence: implemented Laravel tests cover 20-per-page pagination metadata and stable ordering by `final_score DESC`, `created_at DESC`, and `id DESC`.
 
 ## Semantic Search
 

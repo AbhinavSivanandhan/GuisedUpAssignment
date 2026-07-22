@@ -2,7 +2,7 @@
 
 ## 1. Document Status
 
-This Technical Solution Document was prepared before application code. It has now been reconciled with the backend foundation implementation. Laravel post and interaction endpoints, PostgreSQL/pgvector migrations, Sanctum token authentication, Docker Compose configuration, Python embedding/authenticity service, README, `.env.example`, and focused tests exist. Feed ranking, semantic search, Expo mobile, SQL challenge answers, deployment, final submission, and video remain deferred.
+This Technical Solution Document was prepared before application code. It has now been reconciled with the backend foundation and feed implementation. Laravel post, feed, and interaction endpoints, PostgreSQL/pgvector migrations, Sanctum token authentication, Docker Compose configuration, Python embedding/authenticity service, README, `.env.example`, and focused tests exist. Semantic search, Expo mobile, SQL challenge answers, deployment, final submission, and video remain deferred.
 
 ## 2. Requirement Sources and Authority
 
@@ -135,7 +135,7 @@ The deterministic hash embedding maps normalized text tokens into a stable 384-d
 
 ## 15. Sanctum Authentication Strategy
 
-Laravel Sanctum token authentication protects the implemented `POST /api/posts` and `POST /api/interactions` endpoints. A local token helper, `POST /api/tokens`, issues tokens for seeded users. Requests without a valid bearer token receive `401`. Future feed and search endpoints must also use Sanctum when implemented.
+Laravel Sanctum token authentication protects the implemented `POST /api/posts`, `GET /api/feed`, and `POST /api/interactions` endpoints. A local token helper, `POST /api/tokens`, issues tokens for seeded users. Requests without a valid bearer token receive `401`. The future search endpoint must also use Sanctum when implemented.
 
 ## 16. API Contracts
 
@@ -264,7 +264,7 @@ Interactions are raw events with type `view`, `reply`, or `reaction`. They suppo
 
 ## 25. Testing Strategy
 
-Focused backend tests now cover Sanctum-protected post creation and interaction logging, validation, persistence, malformed embedding responses, embedding-service failure without partial persistence, repeated raw interactions, deterministic fallback, embedding dimensions, mocked transformer shape, authenticity score bounds, nullable image authenticity, health, and invalid input. Ranking, feed pagination, semantic search, mobile, SQL, deployment, and video tests remain deferred.
+Focused backend tests now cover Sanctum-protected post creation, feed retrieval, and interaction logging; validation; persistence; malformed embedding responses; embedding-service failure without partial persistence; repeated raw interactions; deterministic fallback; embedding dimensions; mocked transformer shape; authenticity score bounds; nullable image authenticity; health; invalid input; all four feed-ranking signals; stable ordering; and 20-per-page feed pagination. Semantic search, mobile, SQL, deployment, and video tests remain deferred.
 
 ## 26. Security and Privacy
 
@@ -276,7 +276,7 @@ The implementation should log embedding service failures, fallback activation, i
 
 ## 28. AI-Agentic Tools Actually Used
 
-Codex has been used for requirements traceability, repository governance preparation, architecture documentation, TSD drafting, feature-specification drafting, documentation consistency review, roadmap evidence synchronization, Laravel foundation implementation, PostgreSQL/pgvector schema implementation, Python embedding-service implementation, endpoint implementation, automated-test creation, and documentation synchronization. No feed ranking endpoint, semantic-search endpoint, mobile app, SQL answers, deployment, hosted repository configuration, final submission, or video generation has been performed.
+Codex has been used for requirements traceability, repository governance preparation, architecture documentation, TSD drafting, feature-specification drafting, documentation consistency review, roadmap evidence synchronization, Laravel foundation implementation, PostgreSQL/pgvector schema implementation, Python embedding-service implementation, post/feed/interaction endpoint implementation, automated-test creation, and documentation synchronization. No semantic-search endpoint, mobile app, SQL answers, deployment, hosted repository configuration, final submission, or video generation has been performed.
 
 ## 29. Trade-Offs
 
@@ -297,7 +297,7 @@ Codex has been used for requirements traceability, repository governance prepara
 ## 31. Known Limitations
 
 - The transformer model path is configured, but the real model dependency and model download are optional and not runtime-verified.
-- Feed ranking, semantic search, mobile screen, SQL answers, deployment, final submission, and video are not implemented.
+- Semantic search, mobile screen, SQL answers, deployment, final submission, and video are not implemented.
 - Docker clean-start was partially verified through image builds, Laravel tests, Python tests, and PostgreSQL migrations; full reviewer-machine reproducibility still requires an external clean checkout/run.
 - Temporal parsing is specified but not implemented.
 
@@ -315,4 +315,4 @@ Codex has been used for requirements traceability, repository governance prepara
 
 ## 33. Deferred Implementation
 
-Deferred work includes feed ranking, semantic search, Expo mobile implementation, SQL challenge answers, full clean-start verification from a fresh checkout, private repository publishing, final submission, and explanation video.
+Deferred work includes semantic search, Expo mobile implementation, SQL challenge answers, full clean-start verification from a fresh checkout, private repository publishing, final submission, and explanation video.

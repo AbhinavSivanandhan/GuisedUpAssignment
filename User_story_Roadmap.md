@@ -2,22 +2,24 @@
 
 ## 1. Verification status
 
-Source of truth: `Assignment.md`, the frozen implementation contract and complete assessment transcription.
+Source of truth: `Assignment.md`, the frozen implementation contract and complete assessment transcription. The original assessment PDF remains the external requirement authority for audit traceability and includes additional product/evaluation phrasing preserved in this roadmap.
 
-The current workspace contains `Assignment.md`, this roadmap, repository governance, workspace documentation, the TSD, architecture documentation, testing strategy, AI usage documentation, an ADR, feature specifications, a Laravel API foundation, a Python FastAPI embedding service, Docker Compose configuration, a README, an environment example, migrations, seeders, and focused backend tests. It does not contain the Expo mobile app, final feed-ranking endpoint, semantic-search endpoint, SQL submission, deployment artifacts, final submission, or video. Therefore:
+The current workspace contains `Assignment.md`, this roadmap, repository governance, workspace documentation, the TSD, architecture documentation, testing strategy, AI usage documentation, an ADR, feature specifications, a Laravel API foundation, a Python FastAPI embedding service, Docker Compose configuration, a README, an environment example, migrations, seeders, `GET /api/feed`, and focused backend tests. It does not contain the Expo mobile app, semantic-search endpoint, SQL submission, deployment artifacts, final submission, or video. Therefore:
 
-- This roadmap organizes and traces the requirements in `Assignment.md`.
-- A roadmap item may not weaken or contradict `Assignment.md`.
+- This roadmap organizes and traces the requirements in `Assignment.md` and the original assessment PDF.
+- A roadmap item may not weaken or contradict `Assignment.md` or the original assessment PDF.
 - Application implementation compliance is verified only for the backend foundation evidence listed below.
 - Documentation-only evidence may be recorded below when a document directly satisfies a documentation acceptance criterion.
 - Application stories remain `Unverified / not evidenced` until their acceptance criteria can be demonstrated in the submission repository; partial backend stories below are documented separately from deferred feed, search, mobile, SQL, deployment, and video work.
 - Any roadmap item that is not directly traceable to `Assignment.md` is planning guidance only, unless later approved through a contract-compliant amendment.
+- Verified assessment-weighted progress before US-18 implementation was approximately 52%, based only on audited evidence: TSD/documentation 25/25, backend foundation about 12/25, React Native 0/20, SQL 0/15, AI usage 15/15.
+- Verified assessment-weighted progress after US-18 implementation is approximately 57%, based on the same evidence plus `GET /api/feed`, focused feed-ranking tests, route verification, and API image build verification.
 
 ## 2. Definition of success
 
 Deliver a private, reproducible full-stack assessment within one full day (8 hours) that demonstrates a personalized Real Connections Feed, natural-language semantic search, clean architecture, intentional mobile UI, correct raw SQL, documented technical reasoning, honest AI-assisted workflow, and an explanatory product video.
 
-The solution must use React Native, Laravel PHP, Python where appropriate, SQL, and a vector database. It is not a generic CRUD exercise: decisions and product comprehension must be visible in both the TSD and implementation.
+The solution must use React Native, Laravel PHP, Python where appropriate, SQL, and a vector database. It is not a generic CRUD exercise: decisions and product comprehension must be visible in both the TSD and implementation. The product framing is no curated highlight reels, no follower-count anxiety, and real people making real connections.
 
 ## 3. Deliverables register
 
@@ -46,10 +48,12 @@ Acceptance criteria:
 
 - Plan and execute within one full day / 8 hours.
 - Use AI agentic tools; not using them is explicitly a red flag.
+- Use AI agentic tools to move fast, with the original PDF setting an 80%+ efficiency expectation.
 - Do not share the project with anyone else; treat it as confidential.
 - Do not plagiarize; the work must demonstrate understanding rather than copied boilerplate.
 - Use no more than one clarifying question to the founder.
 - If a clarifying question is necessary, use only an assessment-authorized channel.
+- If blocked, the original PDF permits DM to the founder on LinkedIn or WhatsApp at the number from which the assessment was received.
 - Any libraries, frameworks, or normal development tools may be used.
 - If incomplete, submit the partial work and identify in README what ran out of time.
 
@@ -58,7 +62,7 @@ Deliverable impact: protects DEL-01 through DEL-10 and prevents disqualification
 Status and evidence:
 
 - Status: Active guardrail; documentation evidence recorded, submission behavior not complete.
-- Evidence: `Assignment.md`, `AGENTS.md`, `docs/governance.md`, `docs/TSD.md`, and `docs/ai-usage.md` document the 8-hour constraint, AI-agentic usage requirement, confidentiality, plagiarism prohibition, clarifying-question limit, normal-tool allowance, and partial-submission disclosure rule.
+- Evidence: `Assignment.md`, the original PDF, `AGENTS.md`, `docs/governance.md`, `docs/TSD.md`, and `docs/ai-usage.md` document the 8-hour constraint, AI-agentic usage requirement, 80%+ efficiency expectation, confidentiality, plagiarism prohibition, clarifying-question limit, allowed LinkedIn/WhatsApp blocker contact, normal-tool allowance, and partial-submission disclosure rule.
 - Implementation status: Not implemented; not runtime-verified.
 
 ### Phase 1 — Technical Solution Document before code
@@ -70,6 +74,7 @@ As a reviewer, I want the TSD to show accurate product comprehension so that I c
 Acceptance criteria:
 
 - State that the feature is a personalized `Real Connections` feed.
+- State that the product avoids curated highlight reels and follower-count anxiety.
 - State that likes, shares, and comments must not be used as engagement-ranking metrics.
 - Describe the product goal from `Assignment.md`: personalized ranking based on authenticity signals, relationship depth, semantic similarity, and time decay.
 - Explain that natural-language search must return semantic rather than keyword matches.
@@ -79,7 +84,7 @@ Completes part of DEL-01.
 Status and evidence:
 
 - Status: Documentation complete for this story.
-- Evidence: `docs/TSD.md` sections 4, 6, 17, 22, and 32 document the Real Connections objective, non-engagement ranking, Assignment.md product goal, and semantic rather than keyword search.
+- Evidence: `docs/TSD.md` sections 4, 6, 17, 22, and 32 document the Real Connections objective, non-engagement ranking, Assignment.md product goal, and semantic rather than keyword search. The original PDF additionally frames the product as no curated highlight reels and no follower-count anxiety.
 - Implementation status: Not implemented; not runtime-verified.
 
 #### US-02 — Document the system architecture
@@ -117,7 +122,7 @@ Status and evidence:
 
 - Status: Documentation complete for this story.
 - Evidence: `docs/TSD.md` sections 9 and 10 document tables, relationships, indexes, and SQL challenge support.
-- Implementation status: Not implemented; migrations not created; not runtime-verified.
+- Implementation status: Documentation complete. Migrations now exist and were runtime-verified in the backend foundation audit; SQL challenge queries remain unimplemented.
 
 #### US-04 — Document embeddings and vector storage
 
@@ -137,7 +142,7 @@ Status and evidence:
 
 - Status: Documentation complete for this story.
 - Evidence: `docs/TSD.md` sections 11 through 14 and `docs/decisions/ADR-001-pgvector.md` document embedding generation, pgvector selection, `sentence-transformers/all-MiniLM-L6-v2`, 384 dimensions, deterministic fallback, and limitations.
-- Implementation status: Not implemented; not runtime-verified.
+- Implementation status: Documentation complete. pgvector storage and deterministic fallback are implemented and tested; actual transformer model execution remains unverified.
 
 #### US-05 — Document the API contract and authentication
 
@@ -156,7 +161,7 @@ Status and evidence:
 
 - Status: Documentation complete for this story.
 - Evidence: `docs/TSD.md` sections 15 and 16 document all required endpoints, request/response shapes, Sanctum authentication, post creation, feed pagination, search, and interaction logging.
-- Implementation status: Not implemented; not runtime-verified.
+- Implementation status: Documentation complete. `POST /api/posts`, `GET /api/feed`, and `POST /api/interactions` are implemented and tested; `GET /api/search` remains missing.
 
 #### US-06 — Specify the feed-ranking algorithm
 
@@ -197,7 +202,7 @@ Completes the AI tooling section of DEL-01 and supports the 15% AI Tool Usage sc
 Status and evidence:
 
 - Status: Documentation complete for verified usage so far.
-- Evidence: `docs/TSD.md` section 28 and `docs/ai-usage.md` record Codex usage for traceability, governance, architecture documentation, TSD drafting, feature-specification drafting, documentation consistency review, and roadmap evidence synchronization.
+- Evidence: `docs/TSD.md` section 28 and `docs/ai-usage.md` record Codex usage for traceability, governance, architecture documentation, TSD drafting, feature-specification drafting, documentation consistency review, roadmap evidence synchronization, Laravel foundation implementation, PostgreSQL/pgvector schema implementation, Python embedding-service implementation, endpoint implementation, automated-test creation, and documentation synchronization.
 - Implementation status: Backend foundation implementation and runtime testing are now claimed only where direct evidence is listed. Deployment and video generation are not claimed.
 
 #### US-08 — Record trade-offs and assumptions
@@ -238,9 +243,9 @@ Contributes to DEL-02.
 
 Status and evidence:
 
-- Status: Backend foundation implemented and runtime-verified for this story.
+- Status: Backend foundation implemented and partially runtime-verified for this story.
 - Evidence: `api/` implements Laravel as the main API layer; `embedding-service/` implements Python-only embedding/authenticity work; `docker-compose.yml` configures PostgreSQL 16 with `pgvector/pgvector:pg16`; `api/database/migrations/2026_07_22_000000_enable_pgvector_extension.php` enables pgvector; `embedding-service/app/core.py` implements deterministic fallback.
-- Verification: Docker images built; Laravel feature tests passed; Python tests passed; PostgreSQL migrations ran with `vector` extension confirmed.
+- Verification: Docker images built; Laravel feature tests passed; Python tests passed; PostgreSQL migrations ran with `vector` extension confirmed. No PostgreSQL-backed HTTP post/feed request has been end-to-end verified yet.
 
 #### US-10 — Authenticate API clients with Sanctum
 
@@ -256,9 +261,9 @@ Contributes to DEL-02.
 
 Status and evidence:
 
-- Status: Partially implemented; post creation and interaction logging are protected and tested. Personalized feed protection remains deferred with `GET /api/feed`.
-- Evidence: `api/routes/api.php` protects `POST /api/posts` and `POST /api/interactions` with `auth:sanctum`; `api/app/Http/Controllers/AuthTokenController.php` provides a local token helper; `api/tests/Feature/PostCreationTest.php` and `api/tests/Feature/InteractionCreationTest.php` verify `401` for unauthenticated implemented endpoints.
-- Verification: Laravel feature tests passed: 10 tests, 33 assertions.
+- Status: Implemented for `POST /api/posts`, `GET /api/feed`, and `POST /api/interactions`; `GET /api/search` remains deferred.
+- Evidence: `api/routes/api.php` protects `POST /api/posts`, `GET /api/feed`, and `POST /api/interactions` with `auth:sanctum`; `api/app/Http/Controllers/AuthTokenController.php` provides a local token helper; `api/tests/Feature/PostCreationTest.php`, `api/tests/Feature/FeedRankingTest.php`, and `api/tests/Feature/InteractionCreationTest.php` verify `401` for unauthenticated implemented endpoints.
+- Verification: Laravel feature tests passed: 17 tests, 50 assertions.
 
 #### US-11 — Seed test identities
 
@@ -366,6 +371,12 @@ Contributes to DEL-02.
 Status and evidence:
 
 - Status: Implemented and tested.
+- Evidence: `api/routes/api.php`, `api/app/Http/Controllers/FeedController.php`, `api/app/Http/Requests/FeedRequest.php`, `api/config/feed.php`, `api/app/Services/Feed/FeedCandidateRepository.php`, `api/app/Services/Feed/EloquentFeedCandidateRepository.php`, `api/app/Services/Feed/FeedRanker.php`, `api/app/Services/Feed/WeightedFeedRanker.php`, `api/app/Services/Feed/FeedScore.php`, `api/app/Services/Feed/VectorMath.php`, and `api/tests/Feature/FeedRankingTest.php`.
+- Verification: Laravel feature tests passed: 17 tests, 50 assertions. `php artisan route:list` shows `GET|HEAD api/feed`. Tests verify unauthenticated rejection, 20-post page size, pagination metadata, authenticity signal ordering, authenticated-user relationship-depth ordering, semantic-similarity ordering, time-decay ordering, and stable ordering.
+
+Status and evidence:
+
+- Status: Implemented and tested.
 - Evidence: `api/routes/api.php`, `api/app/Http/Controllers/PostController.php`, `api/app/Http/Requests/StorePostRequest.php`, `api/app/Http/Resources/PostResource.php`, `api/app/Services/HttpEmbeddingClient.php`, and `api/tests/Feature/PostCreationTest.php`.
 - Verification: Laravel post-creation feature tests passed, including auth rejection, validation, successful persistence, malformed embedding rejection, and service-failure handling without partial persistence.
 
@@ -413,6 +424,7 @@ Acceptance criteria:
 - Implement `GET /api/search?q={query}`.
 - Embed the natural-language query and use vector similarity rather than keyword matching.
 - Return the top 10 semantically relevant posts.
+- Preserve the original PDF example: `funny travel stories from last week` should return semantically relevant posts rather than keyword matches, with temporal intent handled by a documented date filter.
 - Validate empty or invalid queries and return the documented response shape.
 
 Contributes to DEL-02.
@@ -451,8 +463,8 @@ Contributes to DEL-02 and the 25% Backend Quality score.
 
 Status and evidence:
 
-- Status: Implemented for current backend foundation scope; later ranking and search boundaries remain deferred.
-- Evidence: Controllers delegate validation to form requests and embedding work to `EmbeddingClient`; response resources keep API output separate; migrations and models preserve persistence boundaries.
+- Status: Implemented for current backend scope; semantic search remains deferred.
+- Evidence: Controllers delegate validation to form requests; embedding work uses `EmbeddingClient`; feed ranking uses `FeedCandidateRepository` and `FeedRanker`; ranking weights live in `api/config/feed.php`; response resources keep API output separate; migrations and models preserve persistence boundaries.
 - Verification: Laravel and Python tests passed for implemented behavior.
 
 #### US-22 — Test the most critical logic
@@ -469,9 +481,9 @@ Completes DEL-06 and contributes to DEL-02.
 
 Status and evidence:
 
-- Status: Implemented for backend foundation scope; ranking, semantic search, feed, and mobile tests remain deferred.
-- Evidence: `api/tests/Feature/PostCreationTest.php`, `api/tests/Feature/InteractionCreationTest.php`, `embedding-service/tests/test_core.py`, and `embedding-service/tests/test_api.py`.
-- Verification: Laravel feature tests passed: 10 tests, 33 assertions. Python tests passed: 9 tests.
+- Status: Implemented for post, feed, interaction, and embedding-service scope; semantic search and mobile tests remain deferred.
+- Evidence: `api/tests/Feature/PostCreationTest.php`, `api/tests/Feature/FeedRankingTest.php`, `api/tests/Feature/InteractionCreationTest.php`, `embedding-service/tests/test_core.py`, and `embedding-service/tests/test_api.py`.
+- Verification: Laravel feature tests passed: 17 tests, 50 assertions. Python tests passed: 9 tests.
 
 #### US-23 — Validate backend reproducibility
 
@@ -487,9 +499,9 @@ Completes DEL-02 when US-09 through US-22 are also accepted.
 
 Status and evidence:
 
-- Status: Partially verified. Docker builds, migrations, implemented endpoints, and tests were verified. Full four-endpoint clean-start cannot be complete until feed and search are implemented.
+- Status: Partially verified. Docker builds, migrations, post/feed/interaction endpoints, and tests were verified. Full four-endpoint clean-start cannot be complete until search is implemented.
 - Evidence: `docker-compose.yml`, `api/Dockerfile`, `embedding-service/Dockerfile`, `.env.example`, and `README.md`.
-- Verification: Docker images built; PostgreSQL 16 pgvector service migrated successfully; `vector` extension confirmed. `GET /api/feed` and `GET /api/search` remain deferred.
+- Verification: Docker images built; PostgreSQL 16 pgvector service migrated successfully; `vector` extension confirmed. `GET /api/feed` is implemented and route-verified. `GET /api/search` remains deferred.
 
 ### Phase 3 — React Native Feed Screen
 
@@ -591,6 +603,7 @@ As an analyst, I want the top 10 most active users in the last 7 days so that re
 Acceptance criteria:
 
 - Use raw SQL.
+- Write queries for correctness, efficiency, and readability because the original PDF says they will be run against a real database.
 - Count total interactions as views + replies + reactions.
 - Limit activity to the last 7 days.
 - Rank by total interactions.
@@ -605,6 +618,7 @@ As an analyst, I want recent posts from the people a given user interacts with m
 Acceptance criteria:
 
 - Accept or clearly mark a `user_id` parameter.
+- Write queries for correctness, efficiency, and readability because the original PDF says they will be run against a real database.
 - Calculate which users that user interacts with most.
 - Return all posts by those users from the last 30 days.
 - Order by interaction frequency descending.
@@ -618,6 +632,7 @@ As an analyst, I want posts with many views and no reactions so that content beh
 Acceptance criteria:
 
 - Find posts viewed more than 100 times.
+- Write queries for correctness, efficiency, and readability because the original PDF says they will be run against a real database.
 - Require zero reactions.
 - Return `post_id`, `author_id`, `view_count`, and `created_at`.
 
@@ -630,6 +645,7 @@ As a trust-and-safety reviewer, I want users posting excessively so that potenti
 Acceptance criteria:
 
 - Find users with more than 20 posts in the last 24 hours.
+- Write queries for correctness, efficiency, and readability because the original PDF says they will be run against a real database.
 - Return their email and post count.
 
 Completes DEL-04 when all four queries are placed in `/sql/queries.sql`; supports the 15% SQL score.

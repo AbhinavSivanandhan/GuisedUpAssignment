@@ -1,6 +1,6 @@
 # Guised Up Real Connections Feed
 
-This repository is a take-home assessment implementation in progress. The current foundation implements the Laravel API base, PostgreSQL/pgvector schema, Sanctum-protected post and interaction creation, a Python FastAPI embedding/authenticity service, Docker Compose configuration, and focused tests.
+This repository is a take-home assessment implementation in progress. The current foundation implements the Laravel API base, PostgreSQL/pgvector schema, Sanctum-protected post creation, personalized feed retrieval, interaction creation, a Python FastAPI embedding/authenticity service, Docker Compose configuration, and focused tests.
 
 ## Implemented In This Foundation
 
@@ -9,12 +9,12 @@ This repository is a take-home assessment implementation in progress. The curren
 - Docker Compose services for API, PostgreSQL 16 with pgvector, and embedding service.
 - Migrations for `users`, `personal_access_tokens`, `posts`, and `interactions`.
 - Sanctum token endpoint: `POST /api/tokens`.
-- Protected endpoints: `POST /api/posts` and `POST /api/interactions`.
+- Protected endpoints: `POST /api/posts`, `GET /api/feed`, and `POST /api/interactions`.
 - Deterministic hash embedding fallback for tests and unavailable model downloads.
 
 ## Deferred
 
-`GET /api/feed`, `GET /api/search`, the Expo React Native app, final ranking implementation, SQL challenge answers, hosted deployment, final submission, and explanation video are not implemented yet.
+`GET /api/search`, the Expo React Native app, SQL challenge answers, hosted deployment, final submission, and explanation video are not implemented yet.
 
 ## Prerequisites
 
@@ -104,6 +104,15 @@ curl -X POST http://localhost:8000/api/interactions \
 
 Allowed interaction types are `view`, `reply`, and `reaction`. Repeated raw interaction events are preserved for future relationship-depth scoring and SQL reporting.
 
+## Fetch The Feed
+
+```bash
+curl http://localhost:8000/api/feed?page=1 \
+  -H "Authorization: Bearer <token>"
+```
+
+The feed returns 20 posts per page when available. Ranking combines normalized authenticity, relationship depth from the authenticated user's interactions, semantic similarity from embeddings, and exponential time decay. Global likes, shares, comments, follower totals, and popularity metrics are not ranking inputs.
+
 ## Tests
 
 Laravel tests:
@@ -133,7 +142,7 @@ The fallback uses stable SHA-256 hashing, not Python's randomized `hash()`. It r
 ## Verification Status
 
 - Docker images for `api` and `embedding-service` were built successfully.
-- Laravel feature tests passed: 10 tests, 33 assertions.
+- Laravel feature tests passed: 17 tests, 50 assertions.
 - Python embedding-service tests passed: 9 tests.
 - PostgreSQL migration verification against `pgvector/pgvector:pg16` passed with the `vector` extension enabled. Host port 5432 was already allocated locally, so verification used `DB_PORT_FORWARD=55432`.
 
@@ -141,4 +150,4 @@ The fallback uses stable SHA-256 hashing, not Python's randomized `hash()`. It r
 
 - Full clean-start verification from a fresh checkout still has to be repeated in the target environment.
 - The transformer model path is configured but optional dependencies and model download are not claimed verified until they are installed and run successfully.
-- Feed ranking, semantic search, mobile UI, SQL answers, deployment, and video remain deferred.
+- Semantic search, mobile UI, SQL answers, deployment, and video remain deferred.
