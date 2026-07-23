@@ -1,77 +1,82 @@
 # Guised Up Real Connections Feed
 
-This repository is a take-home assessment implementation in progress. The current repository implements the Laravel API base, PostgreSQL/pgvector schema, Sanctum-protected post creation, personalized feed retrieval, semantic search, interaction creation, raw SQL challenge answers, one Expo React Native feed screen, a Python FastAPI embedding/authenticity service, Docker Compose configuration, and focused tests.
+Guised Up is a full-stack take-home assessment implementing a Real Connections feed: ranked social posts without global popularity signals. The repository contains a Laravel API, PostgreSQL 16 with pgvector, a Python FastAPI embedding/authenticity service, an Expo React Native feed screen, raw SQL challenge answers, and the Technical Solution Document at `docs/TSD.md`.
 
-## Implemented In This Foundation
+Deployment, private GitHub publishing, final submission messaging, and the required explanation video are not completed in this repository.
 
-- Laravel API scaffold under `api/`.
-- Python FastAPI embedding service under `embedding-service/`.
-- Docker Compose services for API, PostgreSQL 16 with pgvector, and embedding service.
-- Migrations for `users`, `personal_access_tokens`, `posts`, and `interactions`.
-- Sanctum token endpoint: `POST /api/tokens`.
-- Protected endpoints: `POST /api/posts`, `GET /api/feed`, `GET /api/search`, and `POST /api/interactions`.
-- Raw SQL challenge answers at `sql/queries.sql`.
-- Expo React Native feed screen under `mobile/`.
-- Deterministic hash embedding fallback for tests and unavailable model downloads.
+## Implemented Features
 
-## Deferred
+- Laravel Sanctum bearer-token authentication.
+- Seeded local users, including `alex@example.test` and `sam@example.test`.
+- `POST /api/posts` with automatic 384-dimensional embedding generation and authenticity scoring.
+- `GET /api/feed` with 20-post pagination, authenticity, relationship, semantic-similarity, and time-relevance ranking.
+- `GET /api/search?q={query}` with vector similarity, top-10 limit, and a `last week` temporal filter.
+- `POST /api/interactions` for `view`, `reply`, and `reaction` raw event logging.
+- Typed current reactions with `like`, `support`, and `good_vibes`, plus `DELETE /api/posts/{post}/reaction`.
+- Search-event and interaction-provenance logging.
+- Materialized user feed profiles rebuilt outside the feed request path.
+- Expo React Native feed screen with feed retrieval, search, infinite scrolling, avatars, post media, Read more / Show less, reaction controls, loading, empty, and error states.
+- PostgreSQL-compatible SQL answers in `sql/queries.sql`.
 
-Hosted deployment, private GitHub publishing, final submission messaging, and explanation video are not implemented yet.
+Global likes, shares, comments, follower totals, global views, global replies, and global reactions are not feed-ranking inputs.
+
+## Repository Structure
+
+- `api/`: Laravel API, migrations, seeders, services, routes, and feature tests.
+- `embedding-service/`: FastAPI embedding/authenticity service and Python tests.
+- `mobile/`: Expo React Native application and TypeScript tests.
+- `docs/`: TSD, architecture, feature specs, testing, AI usage, and production-readiness notes.
+- `sql/queries.sql`: raw SQL challenge answers.
+- `docker-compose.yml`: local API, PostgreSQL/pgvector, and embedding-service stack.
+- `.env.example`, `mobile/.env.example`: non-secret environment templates.
 
 ## Prerequisites
 
 - Docker and Docker Compose.
-- Optional local Python 3.12+ for running pure Python unit tests without Docker.
+- Node 20.19.4 or newer for Expo SDK 54.
+- npm for the mobile app.
+- Optional local Python 3.12+ if running Python tests outside Docker.
 
 Host PHP and Composer are not required when using Docker.
 
-## Setup
+## Clean Start
 
-Create a local environment file from the example when you want to override the Docker defaults:
+From a fresh checkout:
 
 ```bash
 cp .env.example .env
+DB_PORT_FORWARD=55432 docker compose up -d --build
+docker compose exec -T api php artisan migrate --force
+docker compose exec -T api php artisan db:seed --force
 ```
 
-For local assessment use, Docker Compose provides non-secret development defaults for PostgreSQL and hydrates the ignored Laravel `api/.env` file at API startup. Keep real secrets out of tracked files.
+Use `DB_PORT_FORWARD=5432` or omit it only if local port `5432` is free. The internal Docker database port remains `5432`.
 
-Start services:
+The API container hydrates an ignored `api/.env` for local Docker use. Keep real secrets in ignored `.env` files only.
 
-```bash
-docker compose up --build
-```
+## Environment Variables
 
-If host port `5432` is already allocated, use an alternate host port while keeping the internal database service unchanged:
+Root `.env.example` documents:
 
-```bash
-DB_PORT_FORWARD=55432 docker compose up --build
-```
+- Laravel and Docker ports: `APP_*`, `API_PORT`, `DB_PORT_FORWARD`, `EMBEDDING_SERVICE_PORT`.
+- PostgreSQL: `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`.
+- Feed profile/debug settings: `FEED_DEBUG_ENABLED`, `FEED_PROFILE_REBUILD_CONNECTION`, `QUEUE_CONNECTION`.
+- Embeddings: `EMBEDDING_SERVICE_URL`, `EMBEDDING_MODE`, `EMBEDDING_MODEL`, fallback and timeout settings.
+- Mobile convenience values: `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_SANCTUM_TOKEN`, `EXPO_PUBLIC_DEVELOPER_MODE`.
 
-Run migrations and seed test users:
+`mobile/.env.example` documents the Expo public values used by the mobile client. Do not commit real tokens.
 
-```bash
-docker compose exec api php artisan migrate --seed
-```
-
-The PostgreSQL container uses the `pgvector/pgvector:pg16` image. The Laravel migration enables `CREATE EXTENSION IF NOT EXISTS vector` and creates an HNSW cosine index on `posts.embedding`.
-
-## Service Health
-
-Embedding service:
-
-```bash
-curl http://localhost:8001/health
-```
-
-Laravel health route:
+## Health Checks
 
 ```bash
 curl http://localhost:8000/up
+curl http://localhost:8001/health
+docker compose exec -T db psql -U guised_up -d guised_up -c "select extname from pg_extension where extname = 'vector';"
 ```
 
-## Test Users And Token
+## Authentication
 
-Seeded local users:
+Seeded local credentials:
 
 - `alex@example.test` / `password`
 - `sam@example.test` / `password`
@@ -79,110 +84,103 @@ Seeded local users:
 Create a Sanctum token:
 
 ```bash
-curl -X POST http://localhost:8000/api/tokens \
+curl -s -X POST http://localhost:8000/api/tokens \
   -H "Content-Type: application/json" \
   -d '{"email":"alex@example.test","password":"password","device_name":"local"}'
 ```
 
 Use the returned token as `Authorization: Bearer <token>`.
 
-## Create A Post
+## API Examples
+
+Create a post:
 
 ```bash
 curl -X POST http://localhost:8000/api/posts \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
-  -d '{"text":"A grounded post about today","image_url":"https://example.test/photo.jpg"}'
+  -d '{"text":"A grounded post about today","image_url":"https://example.com/photo.jpg"}'
 ```
 
-The API calls the embedding service automatically, stores a 384-dimensional embedding, stores `embedding_status`, and records explainable authenticity scores. Image authenticity remains `null` unless a real image-analysis signal exists.
-
-## Record An Interaction
+Fetch feed:
 
 ```bash
-curl -X POST http://localhost:8000/api/interactions \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{"post_id":1,"type":"reaction"}'
-```
-
-Allowed interaction types are `view`, `reply`, and `reaction`. Repeated raw interaction events are preserved for future relationship-depth scoring and SQL reporting.
-
-## Fetch The Feed
-
-```bash
-curl http://localhost:8000/api/feed?page=1 \
+curl "http://localhost:8000/api/feed?page=1" \
   -H "Authorization: Bearer <token>"
 ```
 
-The feed returns 20 posts per page when available. Ranking combines normalized authenticity, relationship depth from the authenticated user's interactions, semantic similarity from embeddings, and exponential time decay. Global likes, shares, comments, follower totals, and popularity metrics are not ranking inputs.
-
-## Search Posts
+Search:
 
 ```bash
 curl "http://localhost:8000/api/search?q=funny%20travel%20stories%20from%20last%20week" \
   -H "Authorization: Bearer <token>"
 ```
 
-Search embeds the query through the embedding-service boundary and ranks posts by vector cosine similarity. PostgreSQL uses pgvector for similarity search. SQLite feature tests use a database-independent cosine path behind the same search repository boundary. Results return at most 10 posts with author information, post text, optional image URL, creation time, similarity score, embedding mode, and any parsed temporal filter. The phrase `last week` is currently interpreted as a trailing seven-day `created_at` filter.
+Record an interaction:
 
-## Mobile Feed Screen
+```bash
+curl -X POST http://localhost:8000/api/interactions \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"post_id":1,"type":"reaction","reaction_kind":"like"}'
+```
 
-The Expo app lives in `mobile/`. Configure the API URL and Sanctum token with Expo public environment variables:
+Remove current reaction state:
+
+```bash
+curl -X DELETE http://localhost:8000/api/posts/1/reaction \
+  -H "Authorization: Bearer <token>"
+```
+
+## Mobile App
 
 ```bash
 cd mobile
 cp .env.example .env
+npm ci
 ```
 
-Set `EXPO_PUBLIC_API_BASE_URL` to the Laravel base URL and set `EXPO_PUBLIC_SANCTUM_TOKEN` to a token from `POST /api/tokens`.
+Set:
 
-Install and run:
+- `EXPO_PUBLIC_API_BASE_URL` to the Laravel URL.
+- `EXPO_PUBLIC_SANCTUM_TOKEN` to a local development token.
+- `EXPO_PUBLIC_DEVELOPER_MODE=true` only when local ranking diagnostics should be visible.
+
+Run Expo Web:
 
 ```bash
-npm install
-npm run start -- --localhost
+npm run start -- --web --clear --port 8091
 ```
 
-For owner testing on this Mac through Expo Web:
+Run for iOS simulator:
 
 ```bash
-npm run start -- --web --port 8091
+npm run start -- --ios --port 8091
 ```
 
-The screen fetches `GET /api/feed`, paginates with infinite scroll, renders post cards with avatar placeholder, username, post text, relative time, and reaction button, calls `POST /api/interactions` for reactions, and calls `GET /api/search` from the inline search bar.
+Run for Android emulator:
 
-Reaction buttons hydrate from `viewer_has_reacted`. Pressing `React` records a raw reaction interaction and activates current reaction state; pressing `Reacted ✓` calls `DELETE /api/posts/{post}/reaction` to remove only the current reaction state. Raw interaction history remains available for ranking and SQL reporting.
+```bash
+npm run start -- --android --port 8091
+```
 
-Reactions are data-driven. The current supported reaction kinds are `like`, `support`, and `good_vibes`; older clients that omit `reaction_kind` default to `like`. Feed and search responses return both `viewer_has_reacted` and `viewer_reaction_kind`.
-
-The mobile feed retains at most five complete feed pages, or 100 posts, in memory. Scrolling down appends the next page and releases the lowest page when necessary; scrolling back near the top reloads the preceding released page and releases the highest page when necessary. The UI reports retained posts separately from the API's `meta.total`, and search results remain independent at the API's 10-result limit.
-
-Seeded demo content is idempotent. Running `php artisan db:seed` preserves existing owner-UAT posts and creates additional believable demo users, avatar URLs, varied post text, valid image URLs, a controlled broken-image case, long posts for Read more / Show less, and enough posts to exercise multiple pages.
-
-Production media and pagination limitations are documented in `docs/production-readiness.md`.
+For a physical device, set `EXPO_PUBLIC_API_BASE_URL` to a LAN-reachable computer address such as `http://192.168.x.x:8000`; Expo tunnel mode tunnels Metro, not the Laravel API.
 
 ## Tests
 
-Laravel tests:
+Laravel:
 
 ```bash
-docker run --rm guisedup-api php artisan test --testsuite=Feature
+docker compose exec -T api php artisan test
 ```
 
-Python tests inside Docker:
+Python:
 
 ```bash
-docker run --rm guisedup-embedding-service python -m pytest
+docker compose exec -T embedding-service python -m pytest
 ```
 
-Pure Python core tests can run locally if Python is available:
-
-```bash
-PYTHONPATH=embedding-service python3 -m unittest discover -s embedding-service/tests
-```
-
-Mobile checks:
+Mobile:
 
 ```bash
 cd mobile
@@ -190,42 +188,60 @@ npm run typecheck
 npm test
 ```
 
-The tests use fallback mode or mocks and do not require downloading `sentence-transformers/all-MiniLM-L6-v2`. The default Docker image installs the FastAPI service and fallback path only. To exercise the transformer path later, install `embedding-service/requirements-optional-transformer.txt` in the embedding-service environment and set `EMBEDDING_MODE=transformer`.
+The Python and Laravel tests use fallback mode or mocks and do not require downloading `sentence-transformers/all-MiniLM-L6-v2`.
 
 ## SQL Challenge
 
-The raw SQL answers live in `sql/queries.sql`.
-
-D2 uses a psql variable for the supplied user id:
+Run all four SQL answers with a supplied D2 user id:
 
 ```bash
 sed -n '1,220p' sql/queries.sql | docker compose exec -T db psql -U guised_up -d guised_up -v user_id=1
 ```
 
-The queries are PostgreSQL-compatible and use `CURRENT_TIMESTAMP` for relative time windows. They were verified against the Docker PostgreSQL database with representative fixture data inserted inside transactions and rolled back.
+The queries use PostgreSQL-compatible SQL, `CURRENT_TIMESTAMP` relative windows, CTEs where useful, and deterministic tie-breakers.
 
-## Deterministic Fallback
+## Ranking Summary
 
-The fallback uses stable SHA-256 hashing, not Python's randomized `hash()`. It returns exactly 384 finite numeric values and is labeled as `fallback`. It is test/failure infrastructure, not genuine semantic search.
+Feed ranking uses:
 
-## Verification Status
+```text
+final_score =
+    0.30 × authenticity
+  + 0.30 × relationship_depth
+  + 0.25 × semantic_similarity
+  + 0.15 × time_decay
+```
 
-- Docker images for `api` and `embedding-service` were built successfully.
-- Laravel feature tests passed: 24 tests, 74 assertions.
-- Python embedding-service tests passed: 9 tests.
-- Mobile TypeScript type-check passed.
-- Mobile tests passed: 13 tests.
-- Expo Web was verified with `npx expo start --web --clear --port 8091`; the app reached `http://localhost:8091`, loaded real feed data from the Docker Laravel API, searched inline, loaded the second feed page, and recorded a reaction.
-- PostgreSQL migration verification against `pgvector/pgvector:pg16` passed with the `vector` extension enabled. Host port 5432 was already allocated locally, so verification used `DB_PORT_FORWARD=55432`.
-- Authenticated HTTP smoke testing against the Docker stack passed for token creation, unauthenticated rejection, `POST /api/posts`, `POST /api/interactions`, `GET /api/feed`, `GET /api/search`, validation errors, 384-dimensional embedding persistence, and cleanup of marked smoke records.
-- A rolled-back PostgreSQL check executed `posts.embedding <=> query_vector` and returned a similarity score of `1` for an identical 384-dimensional vector.
-- `sql/queries.sql` was executed against PostgreSQL with rolled-back fixtures covering the D1 seven-day window, D2 30-day post window, D3 exactly-100-view and reaction exclusions, D4 exactly-20-post and old-post exclusions, and interaction-count ties.
+All components are normalized to `0..1`. The score is calculated before display rounding. Ties sort by `final_score DESC`, `created_at DESC`, then `id DESC`. Development-only ranking diagnostics are gated by `FEED_DEBUG_ENABLED` on the backend and `EXPO_PUBLIC_DEVELOPER_MODE` in the mobile app; committed defaults are `false`.
+
+## Embeddings
+
+The Python service is configured for `sentence-transformers/all-MiniLM-L6-v2` and 384-dimensional vectors. Docker defaults to deterministic fallback mode so setup and tests do not require model downloads. The fallback uses stable SHA-256 hashing, returns exactly 384 finite values, and is not genuine semantic search. Production use should install `embedding-service/requirements-optional-transformer.txt` and run transformer mode after verifying model download and resource constraints.
 
 ## Known Limitations
 
-- Full clean-start verification from a fresh checkout still has to be repeated in the target environment.
-- The transformer model path is configured but optional dependencies and model download are not claimed verified until they are installed and run successfully.
-- The semantic search implementation currently supports only a small explicit temporal parser for `last week`; broader natural-language date parsing remains deferred.
-- Physical-device rendering has not been owner-accepted yet. Expo Web is available for local owner testing on this Mac.
-- `npm install` for the mobile app reported 11 moderate vulnerabilities in the installed dependency tree; no audit fix was applied.
-- Deployment and video remain deferred.
+- The explanation video is not included.
+- Deployment is not completed.
+- The transformer model path is configured but not claimed verified unless optional dependencies and model download are run successfully.
+- Temporal search currently handles the explicit `last week` pattern, not broad natural-language date parsing.
+- Feed profiles are eventually consistent; interaction writes dispatch non-blocking rebuilds.
+- Offset/page pagination can drift if ranking inputs change during a long session.
+- Mobile memory retains a bounded page window and does not restore scroll state after app restart.
+- Physical-device acceptance still requires the owner to run the app on their target device.
+- External demo media is less reliable than controlled object storage.
+
+## Submission Contents
+
+Required technical artifacts are present:
+
+- `README.md`
+- `.env.example`
+- `mobile/.env.example`
+- `docs/TSD.md`
+- `sql/queries.sql`
+- Laravel migrations and tests
+- Python service and tests
+- Expo React Native screen and tests
+- AI usage documentation in `docs/ai-usage.md`
+
+Remaining manual submission work: private GitHub publication, explanation video recording/linking, deployment if desired, and final message to the founder.

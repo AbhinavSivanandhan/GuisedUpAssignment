@@ -1,6 +1,6 @@
 # Testing Strategy
 
-Backend tests now exist for implemented post creation, feed ranking, semantic search, and interaction behavior. Laravel feature tests and Python embedding-service tests have been run in Docker. Authenticated HTTP smoke tests have been run against the Docker PostgreSQL/pgvector stack. SQL challenge queries have been executed against PostgreSQL with rolled-back fixtures. The Expo React Native feed screen has TypeScript and focused state tests. Deployment and video verification remain future work. The strategy prioritizes critical flows and does not require exhaustive TDD.
+Backend tests exist for implemented post creation, feed ranking, semantic search, and interaction behavior. Laravel feature tests and Python embedding-service tests have been run in Docker from a clean tracked-file checkout. Authenticated HTTP smoke tests have been run against the Docker PostgreSQL/pgvector stack. SQL challenge queries have been executed against PostgreSQL with rolled-back fixtures. The Expo React Native feed screen has TypeScript and focused state tests. Deployment, physical-device acceptance, and video verification remain future work. The strategy prioritizes critical flows and does not require exhaustive TDD.
 
 ## Sanctum Authentication
 
@@ -90,7 +90,7 @@ final_score =
 ## React Native Component and Integration Behavior
 
 - Component or integration tests should cover feed loading, post card fields, relative time, reaction button states, infinite scrolling, inline search results, empty state, error state, and retry behavior.
-- Current evidence: the mobile app under `mobile/` separates the API client, feed/search state hook, reducer, reusable `PostCard`, screen composition, and theme tokens. `npm run typecheck` passed. `npm test` passed 20 tests covering API error mapping, request timeout, typed reaction API calls, reaction undo API calls, pagination deduplication, search-mode switching, stale search-response rejection, stale search-error rejection, recoverable error handling, pagination metadata, duplicate filtering, page-aligned feed retention, bidirectional page-window loading, partial final page retention, refresh reset, reaction success/failure rollback, and consistent reaction updates across feed and search state.
+- Current evidence: the mobile app under `mobile/` separates the API client, feed/search state hook, reducer, reusable `PostCard`, screen composition, and theme tokens. Clean-checkout `npm run typecheck` passed. Clean-checkout `npm test` passed 30 tests covering API error mapping, request timeout, typed reaction API calls, reaction undo API calls, qualified-view logging helpers, pagination deduplication, search-mode switching, stale search-response rejection, stale search-error rejection, recoverable error handling, pagination metadata, duplicate filtering, page-aligned feed retention, bidirectional page-window loading, partial final page retention, refresh reset, reaction success/failure rollback, ranking-debug display, reaction control behavior, and consistent reaction updates across feed and search state.
 
 ## Mobile Feed Memory Policy
 
@@ -99,7 +99,7 @@ final_score =
 - Later complete pages are released only after an earlier page has prepended successfully.
 - The next server page cursor remains independent from retained rows.
 - Search results remain independent and limited to the API's top 10 results.
-- A subtle notice is shown when earlier or later pages have been released.
+- Released-page diagnostics remain internal state/test evidence and are not shown as user-visible post-count/cache copy.
 
 ## SQL Challenge Verification
 
@@ -115,4 +115,4 @@ final_score =
 
 ## Clean-Start Reproducibility
 
-- Future README instructions should support install, environment configuration, database startup, migrations, seeds, backend API, Python embedding service, mobile app, and tests from a clean checkout.
+- Current evidence: a clean tracked-file checkout was copied to `/tmp`, environment examples were copied, Docker images were built from source, migrations and seeders ran from an empty PostgreSQL volume, Laravel/Python/mobile tests passed, routes and HTTP smoke checks passed, SQL queries ran with rollback fixtures, and verification volumes were removed after the pass.

@@ -68,6 +68,10 @@ Thumbs.db
 *.swp
 *.swo
 
+# Local duplicate/next-version materials that are not part of this submission
+Archive/
+Assignment_v2.md
+
 # Generated build artifacts
 *.sqlite
 *.sqlite3

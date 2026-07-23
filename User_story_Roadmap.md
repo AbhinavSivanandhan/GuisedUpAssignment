@@ -8,15 +8,15 @@ The current workspace contains `Assignment.md`, this roadmap, repository governa
 
 - This roadmap organizes and traces the requirements in `Assignment.md` and the original assessment PDF.
 - A roadmap item may not weaken or contradict `Assignment.md` or the original assessment PDF.
-- Application implementation compliance is verified only for the backend foundation evidence listed below.
+- Application implementation compliance is verified only where direct evidence is listed below.
 - Documentation-only evidence may be recorded below when a document directly satisfies a documentation acceptance criterion.
-- Application stories remain `Unverified / not evidenced` until their acceptance criteria can be demonstrated in the submission repository; partial backend stories below are documented separately from deferred mobile, deployment, and video work.
+- Application stories remain `Unverified / not evidenced` until their acceptance criteria can be demonstrated in the submission repository; deployment, final submission messaging, and video remain owner-only/manual work.
 - Any roadmap item that is not directly traceable to `Assignment.md` is planning guidance only, unless later approved through a contract-compliant amendment.
 - Verified assessment-weighted progress before US-18 implementation was approximately 52%, based only on audited evidence: TSD/documentation 25/25, backend foundation about 12/25, React Native 0/20, SQL 0/15, AI usage 15/15.
 - Verified assessment-weighted progress after US-18 implementation is approximately 57%, based on the same evidence plus `GET /api/feed`, focused feed-ranking tests, route verification, and API image build verification.
 - Verified assessment-weighted progress after US-19 implementation is approximately 62%, based on the same evidence plus `GET /api/search`, focused search tests, route verification, Docker image builds, and PostgreSQL pgvector operator verification.
 - Verified assessment-weighted progress after the SQL challenge implementation is approximately 77%, based on the same evidence plus `sql/queries.sql`, PostgreSQL execution of D1 through D4 with rolled-back fixtures, `EXPLAIN` output, and rollback cleanup verification.
-- Verified technical/repository completion after the final integration audit is 100% for implementation, documentation, Docker runtime, automated tests, API smoke tests, SQL verification, and mobile static/runtime-startup checks available in this environment. Overall submission completion remains approximately 97% because private GitHub publishing, explanation video recording, and final submission messaging are owner-only steps that have not occurred.
+- Verified technical/repository completion after this clean-checkout pass is 100% for required implementation, documentation, Docker runtime, migrations, seeders, automated tests, API smoke tests, SQL verification, and mobile static checks available in this environment. Overall submission completion remains below 100% because private GitHub publishing, explanation video recording, deployment if desired, and final submission messaging are owner-only/manual steps that have not occurred.
 
 ## 2. Definition of success
 
@@ -66,7 +66,7 @@ Status and evidence:
 
 - Status: Active guardrail; documentation evidence recorded, submission behavior not complete.
 - Evidence: `Assignment.md`, the original PDF, `AGENTS.md`, `docs/governance.md`, `docs/TSD.md`, and `docs/ai-usage.md` document the 8-hour constraint, AI-agentic usage requirement, 80%+ efficiency expectation, confidentiality, plagiarism prohibition, clarifying-question limit, allowed LinkedIn/WhatsApp blocker contact, normal-tool allowance, and partial-submission disclosure rule.
-- Implementation status: Not implemented; not runtime-verified.
+- Implementation status: Implemented and verified through current backend, mobile, SQL, and documentation evidence where applicable; submission behavior remains manual.
 
 ### Phase 1 — Technical Solution Document before code
 
@@ -88,7 +88,7 @@ Status and evidence:
 
 - Status: Documentation complete for this story.
 - Evidence: `docs/TSD.md` sections 4, 6, 17, 22, and 32 document the Real Connections objective, non-engagement ranking, Assignment.md product goal, and semantic rather than keyword search. The original PDF additionally frames the product as no curated highlight reels and no follower-count anxiety.
-- Implementation status: Not implemented; not runtime-verified.
+- Implementation status: Implemented in feed/search behavior and documented; video/submission proof remains manual.
 
 #### US-02 — Document the system architecture
 
@@ -106,7 +106,7 @@ Status and evidence:
 
 - Status: Documentation complete for this story.
 - Evidence: `docs/TSD.md` section 7 and `docs/architecture.md` document the system architecture and flows for post creation/embedding, feed retrieval, semantic search, and interaction logging.
-- Implementation status: Not implemented; not runtime-verified.
+- Implementation status: Implemented in Docker/Laravel/Python/PostgreSQL/mobile architecture and verified through clean-checkout build, migration, route, and test evidence.
 
 #### US-03 — Document the database schema
 
@@ -187,7 +187,7 @@ Status and evidence:
 
 - Status: Documentation complete for this story.
 - Evidence: `docs/TSD.md` sections 17 through 21 and `docs/features/feed-ranking.md` document plain-English ranking, pseudocode, all four signals, exact weights, normalization, exclusions, cold start, and stable ordering.
-- Implementation status: Not implemented; not runtime-verified.
+- Implementation status: Implemented in `GET /api/feed`; Laravel tests and clean-checkout HTTP smoke tests verify the required signals, 20-per-page pagination, stable ordering, and exclusion of global engagement ranking.
 
 #### US-07 — Record AI-agentic tool usage honestly
 
@@ -248,7 +248,7 @@ Status and evidence:
 
 - Status: Backend foundation implemented and partially runtime-verified for this story.
 - Evidence: `api/` implements Laravel as the main API layer; `embedding-service/` implements Python-only embedding/authenticity work; `docker-compose.yml` configures PostgreSQL 16 with `pgvector/pgvector:pg16`; `api/database/migrations/2026_07_22_000000_enable_pgvector_extension.php` enables pgvector; `embedding-service/app/core.py` implements deterministic fallback.
-- Verification: Docker images built; Laravel feature tests passed; Python tests passed; PostgreSQL migrations ran with `vector` extension confirmed. No PostgreSQL-backed HTTP post/feed request has been end-to-end verified yet.
+- Verification: Clean-checkout Docker images built; Laravel feature tests passed; Python tests passed; PostgreSQL migrations ran with `vector` extension confirmed; authenticated HTTP smoke tests exercised post creation, feed, search, interactions, reaction removal, validation, and embedding persistence against Docker PostgreSQL.
 
 #### US-10 — Authenticate API clients with Sanctum
 
@@ -266,7 +266,7 @@ Status and evidence:
 
 - Status: Implemented for `POST /api/posts`, `GET /api/feed`, `GET /api/search`, and `POST /api/interactions`.
 - Evidence: `api/routes/api.php` protects `POST /api/posts`, `GET /api/feed`, `GET /api/search`, and `POST /api/interactions` with `auth:sanctum`; `api/app/Http/Controllers/AuthTokenController.php` provides a local token helper; `api/tests/Feature/PostCreationTest.php`, `api/tests/Feature/FeedRankingTest.php`, `api/tests/Feature/SearchTest.php`, and `api/tests/Feature/InteractionCreationTest.php` verify `401` for unauthenticated implemented endpoints.
-- Verification: Laravel feature tests passed: 24 tests, 74 assertions.
+- Verification: Clean-checkout Laravel tests passed: 43 tests, 1 skipped, 151 assertions.
 
 #### US-11 — Seed test identities
 
@@ -416,7 +416,7 @@ Status and evidence:
 
 - Status: Implemented and tested.
 - Evidence: `api/routes/api.php`, `api/app/Http/Controllers/FeedController.php`, `api/app/Http/Requests/FeedRequest.php`, `api/config/feed.php`, `api/app/Services/Feed/FeedCandidateRepository.php`, `api/app/Services/Feed/EloquentFeedCandidateRepository.php`, `api/app/Services/Feed/FeedRanker.php`, `api/app/Services/Feed/WeightedFeedRanker.php`, `api/app/Services/Feed/FeedScore.php`, `api/app/Services/Feed/VectorMath.php`, and `api/tests/Feature/FeedRankingTest.php`.
-- Verification: Laravel feature tests passed: 24 tests, 74 assertions. `php artisan route:list` shows `GET|HEAD api/feed`. Tests verify unauthenticated rejection, 20-post page size, pagination metadata, authenticity signal ordering, authenticated-user relationship-depth ordering, semantic-similarity ordering, time-decay ordering, and stable ordering.
+- Verification: Clean-checkout Laravel tests passed: 43 tests, 1 skipped, 151 assertions. `php artisan route:list` shows `GET|HEAD api/feed`. Tests verify unauthenticated rejection, 20-post page size, pagination metadata, authenticity signal ordering, authenticated-user relationship-depth ordering, semantic-similarity ordering, time-decay ordering, stable ordering, ranking-debug gating, global page ranks, and non-blocking stored-profile behavior.
 
 #### US-19 — Search posts with natural language
 
@@ -436,7 +436,7 @@ Status and evidence:
 
 - Status: Implemented and tested.
 - Evidence: `api/routes/api.php`, `api/config/search.php`, `api/app/Http/Controllers/SearchController.php`, `api/app/Http/Requests/SearchRequest.php`, `api/app/Http/Resources/SearchResultResource.php`, `api/app/Services/Search/PostSearch.php`, `api/app/Services/Search/EmbeddingPostSearch.php`, `api/app/Services/Search/SearchCandidateRepository.php`, `api/app/Services/Search/EloquentSearchCandidateRepository.php`, `api/app/Services/Search/SearchSimilarityCalculator.php`, `api/app/Services/Search/CosineSearchSimilarityCalculator.php`, `api/app/Services/Search/TemporalIntentParser.php`, `api/app/Services/Search/SimpleTemporalIntentParser.php`, `api/app/Services/Search/SearchIntent.php`, `api/app/Services/Search/SearchResults.php`, and `api/tests/Feature/SearchTest.php`.
-- Verification: Laravel feature tests passed: 24 tests, 74 assertions. `php artisan route:list` shows `GET|HEAD api/search`. Search tests verify unauthenticated rejection, query validation, semantic vector ranking order, maximum 10 results, empty results, embedding-service failure behavior, and `funny travel stories from last week` temporal handling with a trailing seven-day date filter. PostgreSQL pgvector execution was verified with a rolled-back `posts.embedding <=> query_vector` query returning similarity score `1` for an identical vector.
+- Verification: Clean-checkout Laravel tests passed: 43 tests, 1 skipped, 151 assertions. `php artisan route:list` shows `GET|HEAD api/search`. Search tests verify unauthenticated rejection, query validation, semantic vector ranking order, maximum 10 results, empty results, embedding-service failure behavior, and `funny travel stories from last week` temporal handling with a trailing seven-day date filter. Clean HTTP smoke tests verified search status `200`, top-10 limit, similarity scores, and `last_week` metadata.
 
 #### US-20 — Log feed interactions
 
@@ -454,7 +454,7 @@ Contributes to DEL-02.
 
 Status and evidence:
 
-- Status: Implemented and tested for raw event logging; feed consumption integration remains deferred with the mobile and feed work.
+- Status: Implemented and tested for raw event logging, reaction current state, search/feed provenance, and mobile qualified-view logging.
 - Evidence: `api/routes/api.php`, `api/app/Http/Controllers/InteractionController.php`, `api/app/Http/Requests/StoreInteractionRequest.php`, `api/app/Http/Resources/InteractionResource.php`, and `api/tests/Feature/InteractionCreationTest.php`.
 - Verification: Laravel interaction feature tests passed for unauthenticated rejection, invalid type rejection, valid persistence, missing post rejection, and repeated raw interaction preservation.
 
@@ -474,7 +474,7 @@ Status and evidence:
 
 - Status: Implemented for current backend and SQL scope; mobile, deployment, final submission, and video remain deferred.
 - Evidence: Controllers delegate validation to form requests; embedding work uses `EmbeddingClient`; feed ranking uses `FeedCandidateRepository` and `FeedRanker`; search uses `PostSearch`, `SearchCandidateRepository`, `SearchSimilarityCalculator`, and `TemporalIntentParser`; ranking and search limits live in configuration; response resources keep API output separate; migrations and models preserve persistence boundaries.
-- Verification: Laravel tests passed: 24 tests, 74 assertions. Python tests passed: 9 tests. Final authenticated API smoke tests passed against the Docker PostgreSQL/pgvector stack.
+- Verification: Clean-checkout Laravel tests passed: 43 tests, 1 skipped, 151 assertions. Python tests passed: 9 tests. Authenticated API smoke tests passed against the Docker PostgreSQL/pgvector stack.
 
 #### US-22 — Test the most critical logic
 
@@ -492,7 +492,7 @@ Status and evidence:
 
 - Status: Implemented for post, feed, semantic-search, interaction, embedding-service, and mobile state scope.
 - Evidence: `api/tests/Feature/PostCreationTest.php`, `api/tests/Feature/FeedRankingTest.php`, `api/tests/Feature/SearchTest.php`, `api/tests/Feature/InteractionCreationTest.php`, `embedding-service/tests/test_core.py`, `embedding-service/tests/test_api.py`, and `mobile/tests/feedReducer.test.ts`.
-- Verification: Laravel feature tests passed: 24 tests, 74 assertions. Python tests passed: 9 tests. Mobile state tests passed: 7 tests.
+- Verification: Clean-checkout Laravel tests passed: 43 tests, 1 skipped, 151 assertions. Python tests passed: 9 tests. Mobile typecheck passed. Mobile tests passed: 30 tests.
 
 #### US-23 — Validate backend reproducibility
 
@@ -508,9 +508,9 @@ Completes DEL-02 when US-09 through US-22 are also accepted.
 
 Status and evidence:
 
-- Status: Verified in the current repository environment. Full clean-start verification from a fresh checkout remains intentionally unperformed in the final audit per user instruction.
+- Status: Verified from a clean tracked-file checkout in this pass.
 - Evidence: `docker-compose.yml`, `api/Dockerfile`, `embedding-service/Dockerfile`, `.env.example`, and `README.md`.
-- Verification: Docker images built; PostgreSQL 16 pgvector service migrated successfully; `vector` extension confirmed. `GET /api/feed` and `GET /api/search` are implemented and route-verified. Authenticated HTTP smoke testing passed for token issuance, unauthenticated rejection, post creation, 384-dimensional embedding persistence, interaction persistence, feed pagination shape, semantic search shape and 10-result limit, validation errors, and cleanup of marked smoke records. PostgreSQL pgvector execution was verified with a rolled-back `posts.embedding <=> query_vector` query.
+- Verification: Clean-checkout Docker images built from source with locked Composer dependencies; PostgreSQL 16 pgvector service migrated successfully from an empty database; `vector` extension and indexes were confirmed. `GET /api/feed` and `GET /api/search` are implemented and route-verified. Authenticated HTTP smoke testing passed for token issuance, unauthenticated rejection, post creation, 384-dimensional embedding persistence, interaction persistence, reaction removal, feed pagination shape, semantic search shape and 10-result limit, validation errors, and cleanup of marked smoke records.
 
 ### Phase 3 — React Native Feed Screen
 
@@ -528,7 +528,7 @@ Contributes to DEL-03.
 
 Status and evidence:
 
-- Status: Implemented and statically verified; simulator/device behavior not verified.
+- Status: Implemented and statically verified; physical-device acceptance remains manual.
 - Evidence: `mobile/src/screens/FeedScreen.tsx`, `mobile/src/hooks/useFeedController.ts`, `mobile/src/api/client.ts`, `mobile/src/api/types.ts`, and `mobile/App.tsx`.
 - Verification: `npm run typecheck` passed. Expo startup reached Metro at `http://localhost:8091` / `exp://127.0.0.1:8091`. Expo Web was attempted but required additional web dependencies that are not part of the minimal native app.
 
@@ -548,7 +548,7 @@ Contributes to DEL-03.
 
 Status and evidence:
 
-- Status: Implemented and statically verified; simulator/device behavior not verified.
+- Status: Implemented and statically verified; physical-device acceptance remains manual.
 - Evidence: `mobile/src/components/PostCard.tsx`, `mobile/src/utils/time.ts`, and `mobile/src/theme/tokens.ts` render an avatar placeholder, username, post text, relative time, and reaction button.
 - Verification: `npm run typecheck` passed.
 
@@ -565,7 +565,7 @@ Contributes to DEL-03 and exercises DEL-02.
 
 Status and evidence:
 
-- Status: Implemented and statically verified; backend interaction endpoint was previously tested, but simulator/device behavior was not verified.
+- Status: Implemented and statically/API verified; physical-device acceptance remains manual.
 - Evidence: `mobile/src/components/PostCard.tsx`, `mobile/src/hooks/useFeedController.ts`, and `mobile/src/api/client.ts`; reactions go through `ApiClient.reactToPost` and send `type = reaction`.
 - Verification: `npm run typecheck` passed.
 
@@ -584,9 +584,9 @@ Contributes to DEL-03.
 
 Status and evidence:
 
-- Status: Implemented and tested at reducer level; simulator/device behavior not verified.
+- Status: Implemented and tested at reducer/controller level; physical-device acceptance remains manual.
 - Evidence: `mobile/src/screens/FeedScreen.tsx`, `mobile/src/hooks/useFeedController.ts`, `mobile/src/state/feedReducer.ts`, and `mobile/tests/feedReducer.test.ts`.
-- Verification: `npm test` passed 7 tests, including pagination append without duplicate posts and next-page metadata handling.
+- Verification: Clean-checkout mobile tests passed 30 tests, including pagination append, bidirectional retained page windows, deduplication, refresh reset, and reaction state hydration.
 
 #### US-28 — Search inline from the Feed Screen
 
@@ -603,9 +603,9 @@ Contributes to DEL-03.
 
 Status and evidence:
 
-- Status: Implemented and tested at reducer level; simulator/device behavior not verified.
+- Status: Implemented and tested at reducer/controller/API-client level; physical-device acceptance remains manual.
 - Evidence: `mobile/src/screens/FeedScreen.tsx`, `mobile/src/hooks/useFeedController.ts`, `mobile/src/api/client.ts`, `mobile/src/state/feedReducer.ts`, and `mobile/tests/feedReducer.test.ts`.
-- Verification: `npm test` passed 7 tests, including search-mode switching, clearing back to feed mode, and ignoring stale search success/error results.
+- Verification: Clean-checkout mobile tests passed 30 tests, including search-mode switching, clearing back to feed mode, ignoring stale search success/error results, and search/feed attribution helpers.
 
 #### US-29 — Handle screen states gracefully
 
@@ -625,7 +625,7 @@ Status and evidence:
 
 - Status: Implemented and partially tested through reducer checks; simulator/device behavior not verified.
 - Evidence: `mobile/src/screens/FeedScreen.tsx`, `mobile/src/hooks/useFeedController.ts`, and `mobile/src/state/feedReducer.ts` handle initial loading, pagination loading, search loading, empty states, recoverable errors, and retry.
-- Verification: `npm run typecheck` passed. `npm test` passed 7 tests, including recoverable error handling.
+- Verification: Clean-checkout `npm run typecheck` passed. `npm test` passed 30 tests, including recoverable error handling.
 
 #### US-30 — Deliver intentional UI quality
 
@@ -641,9 +641,9 @@ Completes DEL-03 and supports the 20% React Native Screen score.
 
 Status and evidence:
 
-- Status: Implemented and statically verified; visual quality was not inspected on simulator/device.
+- Status: Implemented and statically verified; physical-device visual acceptance remains manual.
 - Evidence: `mobile/src/theme/tokens.ts`, `mobile/src/screens/FeedScreen.tsx`, and `mobile/src/components/PostCard.tsx` define and use custom colors, spacing, typography, borders, cards, loading, empty, and error states.
-- Verification: `npm run typecheck` passed and Expo startup reached Metro at `http://localhost:8091` / `exp://127.0.0.1:8091`.
+- Verification: Clean-checkout `npm run typecheck`, `npm test`, and `npx expo-doctor` passed. Physical-device visual acceptance remains manual.
 
 ### Phase 4 — Raw SQL challenge
 
@@ -686,7 +686,7 @@ Status and evidence:
 
 - Status: Implemented and PostgreSQL-verified.
 - Evidence: `sql/queries.sql` D2.
-- Verification: Executed with `-v user_id=900001` against Docker PostgreSQL with rolled-back fixtures. Result returned posts by authors the supplied user interacted with, ordered by interaction frequency and deterministic tie rules; the author post outside 30 days was excluded. `EXPLAIN` was run and showed use of `interactions_user_id_post_id_type_index`, `posts_pkey`, `posts_user_id_created_at_index`, and `users_pkey`.
+- Verification: Executed with a supplied fixture `user_id` against Docker PostgreSQL with rolled-back fixtures. Result returned posts by authors the supplied user interacted with, ordered by interaction frequency and deterministic tie rules; the author post outside 30 days was excluded. `EXPLAIN` was run and showed use of `interactions_user_id_post_id_type_index`, `posts_pkey`, `posts_user_id_created_at_index`, and `users_pkey`.
 
 #### US-33 — Write D3: high-view, zero-reaction posts
 
