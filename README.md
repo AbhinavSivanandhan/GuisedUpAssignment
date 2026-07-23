@@ -220,7 +220,6 @@ The Python service is configured for `sentence-transformers/all-MiniLM-L6-v2` an
 
 ## Known Limitations
 
-- The explanation video is not included.
 - Deployment is not completed.
 - The transformer model path is configured but not claimed verified unless optional dependencies and model download are run successfully.
 - Temporal search currently handles the explicit `last week` pattern, not broad natural-language date parsing.
@@ -244,4 +243,5 @@ Required technical artifacts are present:
 - Expo React Native screen and tests
 - AI usage documentation in `docs/ai-usage.md`
 
-Remaining manual submission work: private GitHub publication, explanation video recording/linking, deployment if desired, and final message to the founder.
+## Demo
+https://www.loom.com/share/78ed729654064f6581bbc5ba59a0099d
