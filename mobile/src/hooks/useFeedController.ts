@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 
 import { createApiClient } from '../api/client';
+import { getApiErrorMessage } from '../api/client';
 import type { ApiClient } from '../api/client';
 import { config } from '../config/env';
-import { feedReducer, initialFeedState } from '../state/feedReducer';
+import { canRequestNextFeedPage, feedReducer, initialFeedState } from '../state/feedReducer';
 
 type UseFeedControllerOptions = {
   apiClient?: ApiClient;
@@ -14,6 +15,7 @@ export function useFeedController(options: UseFeedControllerOptions = {}) {
   const mountedRef = useRef(true);
   const loadingPagesRef = useRef(new Set<number>());
   const searchRequestRef = useRef(0);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const apiClient = useMemo(
     () => options.apiClient ?? createApiClient(config.apiBaseUrl, config.developmentToken),
     [options.apiClient]
@@ -37,7 +39,7 @@ export function useFeedController(options: UseFeedControllerOptions = {}) {
         if (mountedRef.current) {
           dispatch({
             type: 'feed/loadError',
-            message: error instanceof Error ? error.message : 'Feed could not be loaded.'
+            message: getApiErrorMessage(error)
           });
         }
       } finally {
@@ -52,14 +54,27 @@ export function useFeedController(options: UseFeedControllerOptions = {}) {
   }, [loadFeedPage]);
 
   const loadNextPage = useCallback(() => {
-    if (state.mode === 'feed' && state.hasNextPage && !state.paginationLoading && !state.initialLoading) {
+    if (canRequestNextFeedPage(state, loadingPagesRef.current.size)) {
       void loadFeedPage(state.page + 1);
     }
-  }, [loadFeedPage, state.hasNextPage, state.initialLoading, state.mode, state.page, state.paginationLoading]);
+  }, [
+    loadFeedPage,
+    state.feedPosts.length,
+    state.hasNextPage,
+    state.initialLoading,
+    state.mode,
+    state.page,
+    state.paginationLoading
+  ]);
 
   const updateQuery = useCallback(
     (query: string) => {
       dispatch({ type: 'search/queryChanged', query });
+
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+        searchTimerRef.current = null;
+      }
 
       const trimmed = query.trim();
       if (trimmed === '') {
@@ -70,37 +85,58 @@ export function useFeedController(options: UseFeedControllerOptions = {}) {
       const requestId = searchRequestRef.current + 1;
       searchRequestRef.current = requestId;
       dispatch({ type: 'search/start' });
-      apiClient
-        .searchPosts(trimmed)
-        .then((response) => {
-          if (mountedRef.current && searchRequestRef.current === requestId) {
-            dispatch({ type: 'search/success', query: trimmed, posts: response.data });
-          }
-        })
-        .catch((error) => {
-          if (mountedRef.current && searchRequestRef.current === requestId) {
-            dispatch({
-              type: 'search/error',
-              query: trimmed,
-              message: error instanceof Error ? error.message : 'Search could not be loaded.'
-            });
-          }
-        });
+
+      searchTimerRef.current = setTimeout(() => {
+        apiClient
+          .searchPosts(trimmed)
+          .then((response) => {
+            if (mountedRef.current && searchRequestRef.current === requestId) {
+              dispatch({ type: 'search/success', query: trimmed, posts: response.data });
+            }
+          })
+          .catch((error) => {
+            if (mountedRef.current && searchRequestRef.current === requestId) {
+              dispatch({
+                type: 'search/error',
+                query: trimmed,
+                message: getApiErrorMessage(error)
+              });
+            }
+          });
+      }, 350);
     },
     [apiClient]
   );
 
+  const retryCurrentOperation = useCallback(() => {
+    const trimmed = state.query.trim();
+    if (state.mode === 'search' && trimmed !== '') {
+      updateQuery(trimmed);
+      return;
+    }
+
+    void loadFeedPage(1);
+  }, [loadFeedPage, state.mode, state.query, updateQuery]);
+
   const reactToPost = useCallback(
     async (postId: number) => {
+      if (state.reactingPostIds.includes(postId)) {
+        return;
+      }
+
       dispatch({ type: 'reaction/start', postId });
 
       try {
         await apiClient.reactToPost(postId);
+        if (mountedRef.current) {
+          dispatch({ type: 'reaction/success', postId });
+        }
       } catch (error) {
         if (mountedRef.current) {
           dispatch({
-            type: 'feed/loadError',
-            message: error instanceof Error ? error.message : 'Reaction could not be saved.'
+            type: 'reaction/error',
+            postId,
+            message: getApiErrorMessage(error)
           });
         }
       } finally {
@@ -109,13 +145,16 @@ export function useFeedController(options: UseFeedControllerOptions = {}) {
         }
       }
     },
-    [apiClient]
+    [apiClient, state.reactingPostIds]
   );
 
   useEffect(() => {
     void loadFeedPage(1);
     return () => {
       mountedRef.current = false;
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+      }
     };
   }, []);
 
@@ -124,6 +163,7 @@ export function useFeedController(options: UseFeedControllerOptions = {}) {
     displayedPosts: state.mode === 'search' ? state.searchPosts : state.feedPosts,
     loadNextPage,
     refreshFeed,
+    retryCurrentOperation,
     updateQuery,
     reactToPost
   };

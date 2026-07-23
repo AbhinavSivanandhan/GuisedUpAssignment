@@ -144,6 +144,12 @@ npm install
 npm run start -- --localhost
 ```
 
+For owner testing on this Mac through Expo Web:
+
+```bash
+npm run start -- --web --port 8091
+```
+
 The screen fetches `GET /api/feed`, paginates with infinite scroll, renders post cards with avatar placeholder, username, post text, relative time, and reaction button, calls `POST /api/interactions` for reactions, and calls `GET /api/search` from the inline search bar.
 
 ## Tests
@@ -198,8 +204,8 @@ The fallback uses stable SHA-256 hashing, not Python's randomized `hash()`. It r
 - Laravel feature tests passed: 24 tests, 74 assertions.
 - Python embedding-service tests passed: 9 tests.
 - Mobile TypeScript type-check passed.
-- Mobile state tests passed: 7 tests.
-- Expo start was verified with `npm run start -- --localhost --port 8091`; Metro reached `exp://127.0.0.1:8091`.
+- Mobile tests passed: 13 tests.
+- Expo Web was verified with `npx expo start --web --clear --port 8091`; the app reached `http://localhost:8091`, loaded real feed data from the Docker Laravel API, searched inline, loaded the second feed page, and recorded a reaction.
 - PostgreSQL migration verification against `pgvector/pgvector:pg16` passed with the `vector` extension enabled. Host port 5432 was already allocated locally, so verification used `DB_PORT_FORWARD=55432`.
 - Authenticated HTTP smoke testing against the Docker stack passed for token creation, unauthenticated rejection, `POST /api/posts`, `POST /api/interactions`, `GET /api/feed`, `GET /api/search`, validation errors, 384-dimensional embedding persistence, and cleanup of marked smoke records.
 - A rolled-back PostgreSQL check executed `posts.embedding <=> query_vector` and returned a similarity score of `1` for an identical 384-dimensional vector.
@@ -210,6 +216,6 @@ The fallback uses stable SHA-256 hashing, not Python's randomized `hash()`. It r
 - Full clean-start verification from a fresh checkout still has to be repeated in the target environment.
 - The transformer model path is configured but optional dependencies and model download are not claimed verified until they are installed and run successfully.
 - The semantic search implementation currently supports only a small explicit temporal parser for `last week`; broader natural-language date parsing remains deferred.
-- Simulator/device rendering was not verified. Expo Web was attempted but is not available because this minimal native Expo app does not install `react-dom`, `react-native-web`, or `@expo/metro-runtime`.
+- Physical-device rendering has not been owner-accepted yet. Expo Web is available for local owner testing on this Mac.
 - `npm install` for the mobile app reported 11 moderate vulnerabilities in the installed dependency tree; no audit fix was applied.
 - Deployment and video remain deferred.

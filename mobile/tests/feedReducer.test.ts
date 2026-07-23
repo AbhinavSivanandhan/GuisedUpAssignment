@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import type { FeedResponse, Post } from '../src/api/types.js';
 import {
+  canRequestNextFeedPage,
   feedReducer,
   hasNextFeedPage,
   initialFeedState,
@@ -114,6 +115,7 @@ test('stale search error is ignored after search is cleared', () => {
 
   assert.equal(staleError.mode, 'feed');
   assert.equal(staleError.error, null);
+  assert.equal(staleError.searchLoading, false);
 });
 
 test('error handling clears loading flags and preserves recoverable message', () => {
@@ -135,9 +137,55 @@ test('feed pagination metadata controls next-page detection', () => {
   assert.equal(hasNextFeedPage(feedResponse([post(1)], 2, 2)), false);
 });
 
+test('next-page requests wait for initial posts and no active feed request', () => {
+  assert.equal(canRequestNextFeedPage(initialFeedState, 0), false);
+
+  const loaded = feedReducer(initialFeedState, {
+    type: 'feed/loadSuccess',
+    response: feedResponse([post(1)], 1, 2)
+  });
+
+  assert.equal(canRequestNextFeedPage(loaded, 1), false);
+  assert.equal(canRequestNextFeedPage(loaded, 0), true);
+});
+
 test('mergeUniquePosts preserves existing order while adding new ids', () => {
   assert.deepEqual(
     mergeUniquePosts([post(1), post(2)], [post(1), post(3)]).map((item) => item.id),
     [1, 2, 3]
   );
+});
+
+test('reaction success records visible feedback and clears pending state', () => {
+  const pending = feedReducer(initialFeedState, {
+    type: 'reaction/start',
+    postId: 10
+  });
+  const succeeded = feedReducer(pending, {
+    type: 'reaction/success',
+    postId: 10
+  });
+  const finished = feedReducer(succeeded, {
+    type: 'reaction/finish',
+    postId: 10
+  });
+
+  assert.deepEqual(finished.reactingPostIds, []);
+  assert.deepEqual(finished.reactedPostIds, [10]);
+  assert.equal(finished.error, null);
+});
+
+test('reaction failure removes false success state and preserves recoverable message', () => {
+  const withReaction = {
+    ...initialFeedState,
+    reactedPostIds: [11]
+  };
+  const failed = feedReducer(withReaction, {
+    type: 'reaction/error',
+    postId: 11,
+    message: 'The API is unreachable.'
+  });
+
+  assert.deepEqual(failed.reactedPostIds, []);
+  assert.equal(failed.error, 'The API is unreachable.');
 });

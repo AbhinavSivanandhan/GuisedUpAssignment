@@ -14,6 +14,7 @@ export type FeedState = {
   searchLoading: boolean;
   error: string | null;
   reactingPostIds: number[];
+  reactedPostIds: number[];
 };
 
 export const initialFeedState: FeedState = {
@@ -27,7 +28,8 @@ export const initialFeedState: FeedState = {
   paginationLoading: false,
   searchLoading: false,
   error: null,
-  reactingPostIds: []
+  reactingPostIds: [],
+  reactedPostIds: []
 };
 
 export function mergeUniquePosts(existing: Post[], incoming: Post[]): Post[] {
@@ -48,6 +50,17 @@ export function hasNextFeedPage(response: FeedResponse): boolean {
   return response.meta.current_page < response.meta.last_page;
 }
 
+export function canRequestNextFeedPage(state: FeedState, activeFeedRequests: number): boolean {
+  return (
+    state.mode === 'feed' &&
+    state.feedPosts.length > 0 &&
+    state.hasNextPage &&
+    !state.paginationLoading &&
+    !state.initialLoading &&
+    activeFeedRequests === 0
+  );
+}
+
 export type FeedAction =
   | { type: 'feed/loadStart'; page: number }
   | { type: 'feed/loadSuccess'; response: FeedResponse }
@@ -57,6 +70,8 @@ export type FeedAction =
   | { type: 'search/success'; query: string; posts: Post[] }
   | { type: 'search/error'; query: string; message: string }
   | { type: 'reaction/start'; postId: number }
+  | { type: 'reaction/success'; postId: number }
+  | { type: 'reaction/error'; postId: number; message: string }
   | { type: 'reaction/finish'; postId: number }
   | { type: 'error/clear' };
 
@@ -96,6 +111,7 @@ export function feedReducer(state: FeedState, action: FeedAction): FeedState {
         query,
         mode: query.trim() === '' ? 'feed' : 'search',
         searchPosts: query.trim() === '' ? [] : state.searchPosts,
+        searchLoading: query.trim() === '' ? false : state.searchLoading,
         error: null
       };
     }
@@ -130,9 +146,23 @@ export function feedReducer(state: FeedState, action: FeedAction): FeedState {
     case 'reaction/start':
       return {
         ...state,
+        error: null,
         reactingPostIds: state.reactingPostIds.includes(action.postId)
           ? state.reactingPostIds
           : [...state.reactingPostIds, action.postId]
+      };
+    case 'reaction/success':
+      return {
+        ...state,
+        reactedPostIds: state.reactedPostIds.includes(action.postId)
+          ? state.reactedPostIds
+          : [...state.reactedPostIds, action.postId]
+      };
+    case 'reaction/error':
+      return {
+        ...state,
+        error: action.message,
+        reactedPostIds: state.reactedPostIds.filter((id) => id !== action.postId)
       };
     case 'reaction/finish':
       return {
