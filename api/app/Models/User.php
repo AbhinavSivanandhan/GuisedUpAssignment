@@ -44,6 +44,16 @@ class User extends Authenticatable
         return $this->hasMany(Interaction::class);
     }
 
+    public function searchEvents(): HasMany
+    {
+        return $this->hasMany(SearchEvent::class);
+    }
+
+    public function feedProfiles(): HasMany
+    {
+        return $this->hasMany(UserFeedProfile::class);
+    }
+
     public function postReactions(): HasMany
     {
         return $this->hasMany(PostReaction::class);

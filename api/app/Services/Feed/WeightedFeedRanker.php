@@ -2,26 +2,26 @@
 
 namespace App\Services\Feed;
 
-use App\Models\Interaction;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Support\Collection;
 
 class WeightedFeedRanker implements FeedRanker
 {
+    public function __construct(private readonly UserFeedProfileService $profiles)
+    {
+    }
+
     public function rank(User $user, Collection $candidates): Collection
     {
-        $interactions = $user->interactions()
-            ->with('post')
-            ->get();
-
-        $relationshipScores = $this->relationshipScores($interactions);
-        $interestVector = $this->interestVector($interactions);
+        $profile = $this->profiles->forRanking($user);
         $scores = [];
 
         foreach ($candidates as $post) {
-            $scores[$post->id] = $this->score($post, $relationshipScores, $interestVector);
+            $scores[$post->id] = $this->score($post, $profile->relationshipScores, $profile->interestVector);
         }
+
+        $debugEnabled = $this->debugEnabled();
 
         return $candidates
             ->sort(function (Post $left, Post $right) use ($scores): int {
@@ -37,7 +37,14 @@ class WeightedFeedRanker implements FeedRanker
 
                 return $right->id <=> $left->id;
             })
-            ->values();
+            ->values()
+            ->when($debugEnabled, function (Collection $ranked) use ($scores): Collection {
+                return $ranked->values()->map(function (Post $post, int $index) use ($scores): Post {
+                    $post->setAttribute('ranking_debug', $this->rankingDebug($index + 1, $scores[$post->id]));
+
+                    return $post;
+                });
+            });
     }
 
     /**
@@ -94,78 +101,41 @@ class WeightedFeedRanker implements FeedRanker
         return $this->clamp(exp(-log(2) * $ageSeconds / $halfLifeSeconds));
     }
 
-    /**
-     * @param Collection<int, Interaction> $interactions
-     * @return array<int, float>
-     */
-    private function relationshipScores(Collection $interactions): array
-    {
-        $rawScores = [];
-
-        foreach ($interactions as $interaction) {
-            if (! $interaction->post) {
-                continue;
-            }
-
-            $authorId = $interaction->post->user_id;
-            $rawScores[$authorId] = ($rawScores[$authorId] ?? 0.0)
-                + $this->interactionWeight($interaction);
-        }
-
-        $max = max($rawScores ?: [0.0]);
-        if ($max <= 0.0) {
-            return [];
-        }
-
-        return array_map(
-            fn (float $value): float => $this->clamp($value / $max),
-            $rawScores
-        );
-    }
-
-    /**
-     * @param Collection<int, Interaction> $interactions
-     * @return list<float>|null
-     */
-    private function interestVector(Collection $interactions): ?array
-    {
-        $vectors = [];
-        $weights = [];
-
-        foreach ($interactions as $interaction) {
-            if (! $interaction->post) {
-                continue;
-            }
-
-            $vector = VectorMath::parse((string) $interaction->post->embedding);
-            if ($vector === []) {
-                continue;
-            }
-
-            $vectors[] = $vector;
-            $weights[] = $this->interactionWeight($interaction);
-        }
-
-        return VectorMath::weightedAverage($vectors, $weights);
-    }
-
-    private function interactionWeight(Interaction $interaction): float
-    {
-        $typeWeights = config('feed.ranking.relationship_event_weights');
-        $baseWeight = (float) ($typeWeights[$interaction->type] ?? 0.0);
-        $createdAt = $interaction->created_at;
-        if ($createdAt === null || $baseWeight <= 0.0) {
-            return 0.0;
-        }
-
-        $ageSeconds = max(0, $createdAt->diffInSeconds(now(), true));
-        $halfLifeSeconds = max(1, (int) config('feed.ranking.relationship_half_life_days', 30) * 86400);
-
-        return $baseWeight * exp(-log(2) * $ageSeconds / $halfLifeSeconds);
-    }
-
     private function clamp(float $value): float
     {
         return max(0.0, min(1.0, $value));
+    }
+
+    private function rankingDebug(int $rank, FeedScore $score): array
+    {
+        $weights = config('feed.ranking.weights');
+        $components = [
+            'authenticity' => $this->debugComponent($score->authenticity, (float) $weights['authenticity']),
+            'relationship_depth' => $this->debugComponent($score->relationshipDepth, (float) $weights['relationship_depth']),
+            'semantic_similarity' => $this->debugComponent($score->semanticSimilarity, (float) $weights['semantic_similarity']),
+            'time_decay' => $this->debugComponent($score->timeDecay, (float) $weights['time_decay']),
+        ];
+        $finalScore = array_sum(array_column($components, 'contribution'));
+
+        return [
+            'rank' => $rank,
+            'final_score' => round($finalScore, 4),
+            'components' => $components,
+        ];
+    }
+
+    private function debugComponent(float $score, float $weight): array
+    {
+        return [
+            'score' => round($score, 4),
+            'weight' => $weight,
+            'contribution' => round($score * $weight, 4),
+        ];
+    }
+
+    private function debugEnabled(): bool
+    {
+        return (bool) config('feed.debug_enabled', false)
+            && ! app()->environment('production');
     }
 }

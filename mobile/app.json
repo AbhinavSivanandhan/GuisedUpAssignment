@@ -18,7 +18,8 @@
     },
     "extra": {
       "apiBaseUrl": "http://localhost:8000",
-      "developmentToken": ""
+      "developmentToken": "",
+      "developerMode": false
     }
   }
 }

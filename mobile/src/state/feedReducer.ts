@@ -14,6 +14,7 @@ export type RetainedFeedPage = {
 export type FeedState = {
   retainedPages: RetainedFeedPage[];
   searchPosts: Post[];
+  searchEventId: number | null;
   mode: FeedMode;
   query: string;
   firstRetainedPage: number | null;
@@ -33,6 +34,7 @@ export type FeedState = {
 export const initialFeedState: FeedState = {
   retainedPages: [],
   searchPosts: [],
+  searchEventId: null,
   mode: 'feed',
   query: '',
   firstRetainedPage: null,
@@ -180,7 +182,7 @@ export type FeedAction =
   | { type: 'feed/loadError'; direction: FeedLoadDirection; message: string }
   | { type: 'search/queryChanged'; query: string }
   | { type: 'search/start' }
-  | { type: 'search/success'; query: string; posts: Post[] }
+  | { type: 'search/success'; query: string; posts: Post[]; searchEventId?: number | null }
   | { type: 'search/error'; query: string; message: string }
   | { type: 'reaction/start'; postId: number; mode: ReactionPendingMode; nextKind: ReactionKind | null }
   | { type: 'reaction/success'; postId: number; viewerReactionKind: ReactionKind | null }
@@ -271,6 +273,7 @@ export function feedReducer(state: FeedState, action: FeedAction): FeedState {
         query,
         mode: query.trim() === '' ? 'feed' : 'search',
         searchPosts: query.trim() === '' ? [] : state.searchPosts,
+        searchEventId: null,
         searchLoading: query.trim() === '' ? false : state.searchLoading,
         error: null
       };
@@ -280,6 +283,7 @@ export function feedReducer(state: FeedState, action: FeedAction): FeedState {
         ...state,
         mode: 'search',
         searchLoading: true,
+        searchEventId: null,
         error: null
       };
     case 'search/success':
@@ -290,6 +294,7 @@ export function feedReducer(state: FeedState, action: FeedAction): FeedState {
       return {
         ...state,
         searchPosts: action.posts,
+        searchEventId: action.searchEventId ?? null,
         searchLoading: false,
         error: null
       };
@@ -300,6 +305,7 @@ export function feedReducer(state: FeedState, action: FeedAction): FeedState {
 
       return {
         ...state,
+        searchEventId: null,
         searchLoading: false,
         error: action.message
       };

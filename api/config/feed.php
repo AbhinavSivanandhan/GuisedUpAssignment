@@ -2,6 +2,8 @@
 
 return [
     'per_page' => 20,
+    'debug_enabled' => env('FEED_DEBUG_ENABLED', false),
+    'profile_rebuild_connection' => env('FEED_PROFILE_REBUILD_CONNECTION', 'deferred'),
 
     'ranking' => [
         'weights' => [

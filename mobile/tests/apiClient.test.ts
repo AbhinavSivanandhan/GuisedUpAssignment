@@ -98,7 +98,7 @@ test('API client sends the selected reaction kind with reaction interactions', a
     }
   });
 
-  await client.reactToPost(42, 'good_vibes');
+  await client.reactToPost(42, 'good_vibes', { source: 'search', searchEventId: 99 });
 
   assert.deepEqual(calls, [
     {
@@ -107,7 +107,45 @@ test('API client sends the selected reaction kind with reaction interactions', a
       body: {
         post_id: 42,
         type: 'reaction',
-        reaction_kind: 'good_vibes'
+        reaction_kind: 'good_vibes',
+        source: 'search',
+        search_event_id: 99
+      }
+    }
+  ]);
+});
+
+test('API client logs qualified views with source and visible duration', async () => {
+  const calls: Array<{ url: string; method?: string; body?: unknown }> = [];
+  const client = createApiClient('http://localhost:8000', 'token', {
+    fetchImpl: async (url, init) => {
+      calls.push({
+        url: String(url),
+        method: init?.method,
+        body: init?.body ? JSON.parse(String(init.body)) : null
+      });
+
+      return new Response(JSON.stringify({ data: { id: 1 } }), {
+        status: 201,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  });
+
+  await client.recordView(42, {
+    source: 'feed',
+    visibleDurationMs: 1500
+  });
+
+  assert.deepEqual(calls, [
+    {
+      url: 'http://localhost:8000/api/interactions',
+      method: 'POST',
+      body: {
+        post_id: 42,
+        type: 'view',
+        source: 'feed',
+        visible_duration_ms: 1500
       }
     }
   ]);

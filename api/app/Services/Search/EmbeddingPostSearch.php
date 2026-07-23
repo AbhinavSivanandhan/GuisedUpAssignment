@@ -28,7 +28,8 @@ class EmbeddingPostSearch implements PostSearch
                 $intent->endsAt
             ),
             intent: $intent,
-            embeddingMode: $analysis->mode
+            embeddingMode: $analysis->mode,
+            queryEmbedding: $analysis->embedding
         );
     }
 }

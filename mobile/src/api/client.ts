@@ -1,4 +1,4 @@
-import type { FeedResponse, ReactionKind, SearchResponse } from './types';
+import type { CurrentUser, FeedResponse, InteractionSource, ReactionKind, SearchResponse } from './types';
 
 export type ApiErrorKind = 'auth' | 'validation' | 'timeout' | 'network' | 'server' | 'unknown';
 
@@ -18,13 +18,20 @@ type CreateApiClientOptions = {
 };
 
 export type ApiClient = {
+  fetchCurrentUser(): Promise<CurrentUser>;
   fetchFeed(page: number): Promise<FeedResponse>;
   searchPosts(query: string): Promise<SearchResponse>;
-  reactToPost(postId: number, reactionKind: ReactionKind): Promise<void>;
+  reactToPost(postId: number, reactionKind: ReactionKind, context?: InteractionContext): Promise<void>;
   removeReaction(postId: number): Promise<void>;
+  recordView(postId: number, context: InteractionContext & { visibleDurationMs: number }): Promise<void>;
 };
 
 const DEFAULT_TIMEOUT_MS = 10000;
+
+export type InteractionContext = {
+  source: InteractionSource;
+  searchEventId?: number | null;
+};
 
 export function getApiErrorMessage(error: unknown): string {
   if (!(error instanceof ApiError)) {
@@ -106,25 +113,42 @@ export function createApiClient(baseUrl: string, token: string, options: CreateA
   }
 
   return {
+    fetchCurrentUser() {
+      return request<CurrentUser>('/api/me');
+    },
     fetchFeed(page: number) {
       return request<FeedResponse>(`/api/feed?page=${page}`);
     },
     searchPosts(query: string) {
       return request<SearchResponse>(`/api/search?q=${encodeURIComponent(query)}`);
     },
-    async reactToPost(postId: number, reactionKind: ReactionKind) {
+    async reactToPost(postId: number, reactionKind: ReactionKind, context: InteractionContext = { source: 'feed' }) {
       await request('/api/interactions', {
         method: 'POST',
         body: JSON.stringify({
           post_id: postId,
           type: 'reaction',
-          reaction_kind: reactionKind
+          reaction_kind: reactionKind,
+          source: context.source,
+          search_event_id: context.source === 'search' ? context.searchEventId : undefined
         })
       });
     },
     async removeReaction(postId: number) {
       await request(`/api/posts/${postId}/reaction`, {
         method: 'DELETE'
+      });
+    },
+    async recordView(postId: number, context: InteractionContext & { visibleDurationMs: number }) {
+      await request('/api/interactions', {
+        method: 'POST',
+        body: JSON.stringify({
+          post_id: postId,
+          type: 'view',
+          source: context.source,
+          search_event_id: context.source === 'search' ? context.searchEventId : undefined,
+          visible_duration_ms: context.visibleDurationMs
+        })
       });
     }
   };

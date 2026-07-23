@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Post, ReactionKind } from '../api/types';
 import { ReactionControl } from './ReactionControl';
+import { formatRankingDebug } from '../feed/rankingDebug';
 import type { ReactionPendingMode } from '../state/feedReducer';
 import { radii, spacing, typography } from '../theme/tokens';
 import type { ThemeColors } from '../theme/tokens';
@@ -12,6 +13,7 @@ type PostCardProps = {
   post: Post;
   pendingMode?: ReactionPendingMode;
   reactionPickerOpen: boolean;
+  showRankingDebug?: boolean;
   theme: ThemeColors;
   onReact(postId: number, reactionKind: ReactionKind): void;
   onOpenReactionPicker(postId: number): void;
@@ -43,6 +45,7 @@ export function PostCard({
   post,
   pendingMode,
   reactionPickerOpen,
+  showRankingDebug = false,
   theme,
   onReact,
   onOpenReactionPicker,
@@ -56,10 +59,17 @@ export function PostCard({
   const [expanded, setExpanded] = useState(false);
   const [fullLineCount, setFullLineCount] = useState<number | null>(null);
   const [measuredPostKey, setMeasuredPostKey] = useState<string | null>(null);
+  const [cardHovered, setCardHovered] = useState(false);
+  const [cardTouched, setCardTouched] = useState(false);
+  const [cardFocusWithin, setCardFocusWithin] = useState(false);
+  const cardTone = useRef(new Animated.Value(0)).current;
   const postKey = `${post.id}:${post.text}`;
   const canLoadImage = canLoadImageUrl(post.image_url);
   const canLoadAvatar = canLoadImageUrl(post.author.avatar_url ?? null);
   const canToggleText = fullLineCount !== null && fullLineCount > COLLAPSED_LINES;
+  const rankingDebug =
+    showRankingDebug && typeof post.similarity_score !== 'number' && post.ranking_debug ? post.ranking_debug : null;
+  const cardInteractive = cardHovered || cardTouched || cardFocusWithin;
 
   useEffect(() => {
     setImageFailed(false);
@@ -75,6 +85,14 @@ export function PostCard({
     setMeasuredPostKey(null);
   }, [post.id, post.text]);
 
+  useEffect(() => {
+    Animated.timing(cardTone, {
+      toValue: cardInteractive ? 1 : 0,
+      duration: 140,
+      useNativeDriver: false
+    }).start();
+  }, [cardInteractive, cardTone]);
+
   function recordFullTextLayout(lineCount: number) {
     if (measuredPostKey === postKey) {
       return;
@@ -85,7 +103,26 @@ export function PostCard({
   }
 
   return (
-    <View style={styles.card}>
+    <Animated.View
+      onBlur={() => setCardFocusWithin(false)}
+      onFocus={() => setCardFocusWithin(true)}
+      onPointerEnter={() => setCardHovered(true)}
+      onPointerLeave={() => setCardHovered(false)}
+      onTouchCancel={() => setCardTouched(false)}
+      onTouchEnd={() => setCardTouched(false)}
+      onTouchStart={() => setCardTouched(true)}
+      style={[
+        styles.card,
+        {
+          backgroundColor: cardTone.interpolate({
+            inputRange: [0, 1],
+            outputRange: [theme.surfaceRaised, theme.surface]
+          })
+        },
+        cardInteractive ? styles.cardInteractive : null
+      ]}
+    >
+      <Animated.View pointerEvents="none" style={[styles.cardHalo, { opacity: cardTone }]} />
       <View style={styles.header}>
         {canLoadAvatar && !avatarFailed ? (
           <Image
@@ -151,6 +188,8 @@ export function PostCard({
         </View>
       ) : null}
 
+      {rankingDebug ? <RankingDebugStrip debug={rankingDebug} styles={styles} /> : null}
+
       <View style={styles.actions}>
         <ReactionControl
           activeKind={activeKind}
@@ -165,6 +204,27 @@ export function PostCard({
         {typeof post.similarity_score === 'number' ? (
           <Text style={styles.searchScore}>Match {Math.round(post.similarity_score * 100)}%</Text>
         ) : null}
+      </View>
+    </Animated.View>
+  );
+}
+
+type RankingDebugStripProps = {
+  debug: NonNullable<Post['ranking_debug']>;
+  styles: ReturnType<typeof createStyles>;
+};
+
+function RankingDebugStrip({ debug, styles }: RankingDebugStripProps) {
+  const display = formatRankingDebug(debug);
+
+  return (
+    <View accessibilityLabel={display.accessibilityLabel} accessible style={styles.scoreStrip}>
+      <Text style={styles.scoreStripTitle}>{display.title}</Text>
+      <View style={styles.scoreStripRow}>
+        <Text style={styles.scoreStripText}>{display.firstRow}</Text>
+      </View>
+      <View style={styles.scoreStripRow}>
+        <Text style={styles.scoreStripText}>{display.secondRow}</Text>
       </View>
     </View>
   );
@@ -181,9 +241,23 @@ function createStyles(theme: ThemeColors) {
       marginVertical: spacing.sm,
       overflow: 'visible',
       padding: spacing.lg,
+      position: 'relative',
       boxShadow: `0 8px 20px ${theme.shadow}`,
       elevation: 2,
       zIndex: 1
+    },
+    cardHalo: {
+      borderRadius: radii.xl,
+      bottom: -2,
+      boxShadow: `0 12px 28px ${theme.shadow}`,
+      left: -2,
+      position: 'absolute',
+      right: -2,
+      top: -2
+    },
+    cardInteractive: {
+      boxShadow: `0 10px 24px ${theme.shadow}`,
+      elevation: 3
     },
     header: {
       alignItems: 'center',
@@ -277,6 +351,33 @@ function createStyles(theme: ThemeColors) {
       marginTop: spacing.lg,
       overflow: 'visible',
       zIndex: 20
+    },
+    scoreStrip: {
+      alignSelf: 'stretch',
+      backgroundColor: theme.surfaceSubtle,
+      borderColor: theme.border,
+      borderRadius: radii.md,
+      borderWidth: 1,
+      gap: spacing.xs,
+      marginTop: spacing.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm
+    },
+    scoreStripTitle: {
+      color: theme.text,
+      fontSize: typography.tiny,
+      fontWeight: '800'
+    },
+    scoreStripRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.xs
+    },
+    scoreStripText: {
+      color: theme.textMuted,
+      fontSize: typography.tiny,
+      fontWeight: '700'
     },
     searchScore: {
       color: theme.textMuted,

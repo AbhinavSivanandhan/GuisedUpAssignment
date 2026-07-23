@@ -9,7 +9,9 @@ class PostResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        return [
+        $rankingDebug = $this->resource->getAttribute('ranking_debug');
+
+        $payload = [
             'id' => $this->id,
             'author' => [
                 'id' => $this->user_id,
@@ -32,5 +34,11 @@ class PostResource extends JsonResource
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];
+
+        if (config('feed.debug_enabled', false) && ! app()->environment('production') && $rankingDebug !== null) {
+            $payload['ranking_debug'] = $rankingDebug;
+        }
+
+        return $payload;
     }
 }

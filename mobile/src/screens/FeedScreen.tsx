@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -10,8 +10,11 @@ import {
   TextInput,
   View
 } from 'react-native';
+import type { ViewToken } from 'react-native';
 
 import { PostCard } from '../components/PostCard';
+import { config } from '../config/env';
+import { QUALIFIED_VIEW_MINIMUM_MS, QUALIFIED_VIEW_VISIBLE_PERCENT, uniqueQualifiedPostIds } from '../feed/qualifiedViews';
 import { useFeedController } from '../hooks/useFeedController';
 import { radii, spacing, typography } from '../theme/tokens';
 import type { ThemeColors } from '../theme/tokens';
@@ -31,10 +34,25 @@ export function FeedScreen({ theme, onToggleTheme }: FeedScreenProps) {
     refreshFeed,
     retryCurrentOperation,
     updateQuery,
-    reactToPost
+    recordQualifiedViews,
+    reactToPost,
+    currentUser
   } = useFeedController();
   const [searchFocused, setSearchFocused] = useState(false);
   const [openReactionPostId, setOpenReactionPostId] = useState<number | null>(null);
+  const recordQualifiedViewsRef = useRef(recordQualifiedViews);
+  const viewabilityConfigRef = useRef({
+    itemVisiblePercentThreshold: QUALIFIED_VIEW_VISIBLE_PERCENT,
+    minimumViewTime: QUALIFIED_VIEW_MINIMUM_MS,
+    waitForInteraction: true
+  });
+  const onViewableItemsChangedRef = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    const postIds = uniqueQualifiedPostIds(viewableItems);
+
+    if (postIds.length > 0) {
+      recordQualifiedViewsRef.current(postIds);
+    }
+  });
   const emptyTitle = state.mode === 'search' ? 'No matching posts' : 'No posts yet';
   const feedRetainedCount = state.retainedPages.reduce((total, page) => total + page.posts.length, 0);
   const initialLoading = state.initialLoading && feedRetainedCount === 0;
@@ -47,6 +65,10 @@ export function FeedScreen({ theme, onToggleTheme }: FeedScreenProps) {
   function closeReactionPicker() {
     setOpenReactionPostId(null);
   }
+
+  useEffect(() => {
+    recordQualifiedViewsRef.current = recordQualifiedViews;
+  }, [recordQualifiedViews]);
 
   return (
     <View style={styles.container}>
@@ -114,6 +136,14 @@ export function FeedScreen({ theme, onToggleTheme }: FeedScreenProps) {
         {searchContext ? (
           <View style={styles.contextRow}>
             <Text style={styles.contextText}>{searchContext}</Text>
+          </View>
+        ) : null}
+
+        {config.developerMode && currentUser ? (
+          <View style={styles.viewerChip} accessibilityLabel={`Viewing as ${currentUser.name ?? currentUser.email}, user ${currentUser.id}`}>
+            <Text style={styles.viewerChipText}>
+              Viewing as {currentUser.name ?? currentUser.email} · user #{currentUser.id}
+            </Text>
           </View>
         ) : null}
 
@@ -200,6 +230,7 @@ export function FeedScreen({ theme, onToggleTheme }: FeedScreenProps) {
             onEndReachedThreshold={0.35}
             onStartReached={loadPreviousPage}
             onStartReachedThreshold={0.2}
+            onViewableItemsChanged={onViewableItemsChangedRef.current}
             refreshControl={
               <RefreshControl
                 colors={[theme.primary]}
@@ -212,6 +243,7 @@ export function FeedScreen({ theme, onToggleTheme }: FeedScreenProps) {
                 }}
               />
             }
+            viewabilityConfig={viewabilityConfigRef.current}
             renderItem={({ item }) => (
               <PostCard
                 onCloseReactionPicker={closeReactionPicker}
@@ -220,6 +252,7 @@ export function FeedScreen({ theme, onToggleTheme }: FeedScreenProps) {
                 post={item}
                 pendingMode={state.pendingReactions[item.id]}
                 reactionPickerOpen={openReactionPostId === item.id}
+                showRankingDebug={config.developerMode && state.mode === 'feed'}
                 theme={theme}
               />
             )}
@@ -342,6 +375,22 @@ function createStyles(theme: ThemeColors) {
       color: theme.textMuted,
       fontSize: typography.small,
       fontWeight: '700'
+    },
+    viewerChip: {
+      alignSelf: 'flex-start',
+      backgroundColor: theme.surfaceSubtle,
+      borderColor: theme.border,
+      borderRadius: radii.md,
+      borderWidth: 1,
+      marginBottom: spacing.sm,
+      marginHorizontal: spacing.lg,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs
+    },
+    viewerChipText: {
+      color: theme.textMuted,
+      fontSize: typography.tiny,
+      fontWeight: '800'
     },
     error: {
       alignItems: 'center',

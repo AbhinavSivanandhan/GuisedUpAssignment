@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 
 import { createApiClient } from '../api/client';
 import { getApiErrorMessage } from '../api/client';
 import type { ApiClient } from '../api/client';
-import type { ReactionKind } from '../api/types';
+import type { CurrentUser, ReactionKind } from '../api/types';
 import { config } from '../config/env';
+import { QUALIFIED_VIEW_MINIMUM_MS, qualifiedViewKey } from '../feed/qualifiedViews';
 import {
   canRequestNextFeedPage,
   canRequestPreviousFeedPage,
@@ -19,14 +20,21 @@ type UseFeedControllerOptions = {
 
 export function useFeedController(options: UseFeedControllerOptions = {}) {
   const [state, dispatch] = useReducer(feedReducer, initialFeedState);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const mountedRef = useRef(true);
+  const stateRef = useRef(state);
   const loadingPagesRef = useRef(new Set<number>());
   const searchRequestRef = useRef(0);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loggedViewsRef = useRef(new Set<string>());
   const apiClient = useMemo(
     () => options.apiClient ?? createApiClient(config.apiBaseUrl, config.developmentToken),
     [options.apiClient]
   );
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   const loadFeedPage = useCallback(
     async (page: number, direction: 'initial' | 'next' | 'previous' = page === 1 ? 'initial' : 'next') => {
@@ -122,7 +130,12 @@ export function useFeedController(options: UseFeedControllerOptions = {}) {
           .searchPosts(trimmed)
           .then((response) => {
             if (mountedRef.current && searchRequestRef.current === requestId) {
-              dispatch({ type: 'search/success', query: trimmed, posts: response.data });
+              dispatch({
+                type: 'search/success',
+                query: trimmed,
+                posts: response.data,
+                searchEventId: response.meta?.search_event_id ?? null
+              });
             }
           })
           .catch((error) => {
@@ -159,6 +172,9 @@ export function useFeedController(options: UseFeedControllerOptions = {}) {
       const post = [...feedPosts, ...state.searchPosts].find((item) => item.id === postId);
       const previousKind = post?.viewer_reaction_kind ?? null;
       const nextKind = previousKind === reactionKind ? null : reactionKind;
+      const interactionState = stateRef.current;
+      const source = interactionState.mode === 'search' && interactionState.searchEventId ? 'search' : 'feed';
+      const searchEventId = source === 'search' ? interactionState.searchEventId : null;
 
       dispatch({
         type: 'reaction/start',
@@ -169,7 +185,10 @@ export function useFeedController(options: UseFeedControllerOptions = {}) {
 
       try {
         if (nextKind) {
-          await apiClient.reactToPost(postId, nextKind);
+          await apiClient.reactToPost(postId, nextKind, {
+            source,
+            searchEventId
+          });
         } else {
           await apiClient.removeReaction(postId);
         }
@@ -195,8 +214,53 @@ export function useFeedController(options: UseFeedControllerOptions = {}) {
     [apiClient, state.pendingReactions, state.retainedPages, state.searchPosts]
   );
 
+  const recordQualifiedViews = useCallback(
+    (postIds: number[]) => {
+      const currentState = stateRef.current;
+      const source = currentState.mode === 'search' && currentState.searchEventId ? 'search' : 'feed';
+      const searchEventId = source === 'search' ? currentState.searchEventId : null;
+
+      for (const postId of postIds) {
+        const key = qualifiedViewKey(source, searchEventId, postId);
+        if (loggedViewsRef.current.has(key)) {
+          continue;
+        }
+
+        loggedViewsRef.current.add(key);
+        apiClient
+          .recordView(postId, {
+            source,
+            searchEventId,
+            visibleDurationMs: QUALIFIED_VIEW_MINIMUM_MS
+          })
+          .catch((error) => {
+            if (config.developerMode) {
+              console.warn('Qualified view write failed.', getApiErrorMessage(error));
+            }
+          });
+      }
+    },
+    [apiClient]
+  );
+
   useEffect(() => {
     void loadFeedPage(1, 'initial');
+
+    if (config.developerMode) {
+      apiClient
+        .fetchCurrentUser()
+        .then((user) => {
+          if (mountedRef.current) {
+            setCurrentUser(user);
+          }
+        })
+        .catch(() => {
+          if (mountedRef.current) {
+            setCurrentUser(null);
+          }
+        });
+    }
+
     return () => {
       mountedRef.current = false;
       if (searchTimerRef.current) {
@@ -207,12 +271,14 @@ export function useFeedController(options: UseFeedControllerOptions = {}) {
 
   return {
     state,
+    currentUser,
     displayedPosts: state.mode === 'search' ? state.searchPosts : flattenRetainedPages(state.retainedPages),
     loadNextPage,
     loadPreviousPage,
     refreshFeed,
     retryCurrentOperation,
     updateQuery,
+    recordQualifiedViews,
     reactToPost
   };
 }

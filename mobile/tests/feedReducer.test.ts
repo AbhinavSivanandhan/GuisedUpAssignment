@@ -83,9 +83,11 @@ test('search mode switches on query and clears back to feed mode', () => {
   const withResults = feedReducer(searching, {
     type: 'search/success',
     query: 'travel stories',
-    posts: [post(4)]
+    posts: [post(4)],
+    searchEventId: 77
   });
   assert.equal(withResults.searchPosts.length, 1);
+  assert.equal(withResults.searchEventId, 77);
 
   const cleared = feedReducer(withResults, {
     type: 'search/queryChanged',
@@ -93,6 +95,7 @@ test('search mode switches on query and clears back to feed mode', () => {
   });
   assert.equal(cleared.mode, 'feed');
   assert.equal(cleared.searchPosts.length, 0);
+  assert.equal(cleared.searchEventId, null);
 });
 
 test('stale search success is ignored when the query changes', () => {
@@ -109,11 +112,13 @@ test('stale search success is ignored when the query changes', () => {
   const staleResult = feedReducer(changed, {
     type: 'search/success',
     query: 'travel stories',
-    posts: [post(7)]
+    posts: [post(7)],
+    searchEventId: 91
   });
 
   assert.equal(staleResult.query, 'coffee meetups');
   assert.equal(staleResult.searchPosts.length, 0);
+  assert.equal(staleResult.searchEventId, null);
 });
 
 test('stale search error is ignored after search is cleared', () => {
