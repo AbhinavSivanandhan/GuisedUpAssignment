@@ -220,12 +220,12 @@ function RankingDebugStrip({ debug, styles }: RankingDebugStripProps) {
   return (
     <View accessibilityLabel={display.accessibilityLabel} accessible style={styles.scoreStrip}>
       <Text style={styles.scoreStripTitle}>{display.title}</Text>
-      <View style={styles.scoreStripRow}>
-        <Text style={styles.scoreStripText}>{display.firstRow}</Text>
-      </View>
-      <View style={styles.scoreStripRow}>
-        <Text style={styles.scoreStripText}>{display.secondRow}</Text>
-      </View>
+      {display.rows.map((row) => (
+        <View key={row.label} style={styles.scoreStripRow}>
+          <Text style={styles.scoreStripLabel}>{row.label}</Text>
+          <Text style={styles.scoreStripValue}>{row.value}</Text>
+        </View>
+      ))}
     </View>
   );
 }
@@ -372,10 +372,20 @@ function createStyles(theme: ThemeColors) {
       alignItems: 'center',
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: spacing.xs
+      gap: spacing.xs,
+      justifyContent: 'space-between'
     },
-    scoreStripText: {
+    scoreStripLabel: {
+      color: theme.text,
+      flexGrow: 1,
+      flexShrink: 0,
+      fontSize: typography.tiny,
+      fontWeight: '800',
+      minWidth: 116
+    },
+    scoreStripValue: {
       color: theme.textMuted,
+      flexShrink: 0,
       fontSize: typography.tiny,
       fontWeight: '700'
     },

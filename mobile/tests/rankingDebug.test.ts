@@ -47,8 +47,12 @@ test('rank debug formats backend-provided score components', () => {
   const display = formatRankingDebug(debug);
 
   assert.equal(display.title, 'Rank #3 · Final 68.4%');
-  assert.equal(display.firstRow, 'A 72×30%=21.6 · R 80×30%=24.0');
-  assert.equal(display.secondRow, 'S 55×25%=13.8 · T 60×15%=9.1');
+  assert.deepEqual(display.rows, [
+    { label: 'Authenticity', value: '72 × 30% = 21.6' },
+    { label: 'Relationship', value: '80 × 30% = 24.0' },
+    { label: 'Semantic similarity', value: '55 × 25% = 13.8' },
+    { label: 'Time relevance', value: '60 × 15% = 9.1' }
+  ]);
   assert.match(display.accessibilityLabel, /authenticity score/);
   assert.match(display.accessibilityLabel, /relationship depth score/);
 });

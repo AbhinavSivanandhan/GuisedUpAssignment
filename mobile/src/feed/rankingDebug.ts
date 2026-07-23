@@ -3,8 +3,10 @@ import type { Post, RankingDebug } from '../api/types';
 
 export type RankingDebugDisplay = {
   title: string;
-  firstRow: string;
-  secondRow: string;
+  rows: Array<{
+    label: string;
+    value: string;
+  }>;
   accessibilityLabel: string;
 };
 
@@ -17,14 +19,24 @@ export function formatRankingDebug(debug: RankingDebug): RankingDebugDisplay {
 
   return {
     title: `Rank #${debug.rank} · Final ${percent(debug.final_score, 1)}%`,
-    firstRow: [
-      `A ${percent(components.authenticity.score)}×${percent(components.authenticity.weight)}%=${contribution(components.authenticity.contribution)}`,
-      `R ${percent(components.relationship_depth.score)}×${percent(components.relationship_depth.weight)}%=${contribution(components.relationship_depth.contribution)}`
-    ].join(' · '),
-    secondRow: [
-      `S ${percent(components.semantic_similarity.score)}×${percent(components.semantic_similarity.weight)}%=${contribution(components.semantic_similarity.contribution)}`,
-      `T ${percent(components.time_decay.score)}×${percent(components.time_decay.weight)}%=${contribution(components.time_decay.contribution)}`
-    ].join(' · '),
+    rows: [
+      {
+        label: 'Authenticity',
+        value: `${percent(components.authenticity.score)} × ${percent(components.authenticity.weight)}% = ${contribution(components.authenticity.contribution)}`
+      },
+      {
+        label: 'Relationship',
+        value: `${percent(components.relationship_depth.score)} × ${percent(components.relationship_depth.weight)}% = ${contribution(components.relationship_depth.contribution)}`
+      },
+      {
+        label: 'Semantic similarity',
+        value: `${percent(components.semantic_similarity.score)} × ${percent(components.semantic_similarity.weight)}% = ${contribution(components.semantic_similarity.contribution)}`
+      },
+      {
+        label: 'Time relevance',
+        value: `${percent(components.time_decay.score)} × ${percent(components.time_decay.weight)}% = ${contribution(components.time_decay.contribution)}`
+      }
+    ],
     accessibilityLabel: [
       `Ranking debug: rank ${debug.rank}`,
       `final score ${percent(debug.final_score, 1)} percent`,
