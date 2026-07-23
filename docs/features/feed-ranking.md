@@ -22,7 +22,7 @@ Failures: `401` unauthenticated, `422` invalid pagination parameter.
 
 ## Data-Model Impact
 
-Read-only. Uses `posts.embedding`, authenticity fields, `posts.created_at`, and raw `interactions` events.
+Read-only for the request. Uses `posts.embedding`, authenticity fields, `posts.created_at`, and materialized `user_feed_profiles` derived from raw `interactions` events. Missing or stale profiles trigger non-blocking rebuild work rather than unbounded aggregation inside `GET /api/feed`.
 
 ## Implementation Rules
 

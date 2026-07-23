@@ -83,7 +83,7 @@ Feature tests for authentication, allowed type validation, reaction-kind validat
 - Adding interaction types beyond `view`, `reply`, and `reaction`.
 - Treating reaction kinds as global popularity counters.
 - Using global interaction totals for feed popularity ranking.
-- Calculating feed ranking from interaction events in this backend foundation batch.
+- Replacing raw interaction history with only aggregate counters.
 
 ## Definition of Done
 
@@ -95,3 +95,4 @@ The feature is done only when `POST /api/interactions` validates and persists ra
 - Implemented for `POST /api/interactions` in `api/`.
 - Runtime-verified by Laravel feature tests where listed in `docs/testing.md`.
 - Feed and search hydrate current reaction state for the authenticated viewer.
+- Interaction provenance and qualified-view fields are implemented for feed/search attribution.

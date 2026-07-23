@@ -88,5 +88,5 @@ The feature is done only when the endpoint is implemented, embeddings are stored
 
 - Specified/documented.
 - Implemented for `POST /api/posts` in `api/`.
-- Runtime-verified by Laravel feature tests: 5 post-creation tests passed as part of the 10-test feature suite.
+- Runtime-verified by Laravel feature tests as part of the current backend test suite recorded in `docs/testing.md`.
 - Transformer model execution remains not runtime-verified; fallback and mocked transformer response shape are tested.

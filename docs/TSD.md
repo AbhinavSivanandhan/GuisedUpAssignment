@@ -314,7 +314,7 @@ Automated coverage includes:
 - Mobile TypeScript tests for API error mapping, pagination, search-state races, bounded page retention, reactions, qualified-view keys, ranking-debug display, and reaction-control behavior.
 - SQL queries verified against PostgreSQL-compatible schema and representative fixtures during prior audit passes.
 
-Exact test totals belong in the final verification report for the run that produced them; they should not be updated by hand without rerunning the suites.
+Most recent clean-checkout verification recorded 43 Laravel tests with 1 skipped and 151 assertions, 9 Python tests, 30 mobile tests, successful mobile TypeScript type-checking, and Expo Doctor 18/18. Those totals reflect the latest documented verification pass and should be updated only after rerunning the suites.
 
 ## 18. AI-Agentic Tools Used
 

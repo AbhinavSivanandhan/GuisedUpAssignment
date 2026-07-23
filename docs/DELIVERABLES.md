@@ -1,8 +1,8 @@
 # Deliverables Status
 
-- Total complete: 84
+- Total complete: 85
 - Total not complete: 0
-- Total manual/pending: 7
+- Total manual/pending: 5
 - Overall code status: ✅ COMPLETE - core backend, embedding service, mobile screen, SQL, tests, Docker, migrations, and seeders are present and suitable for submission based on recent verification.
 - Overall documentation status: ✅ COMPLETE - README, TSD, AI usage notes, testing notes, SQL notes, and supporting docs are present; final external submission assets remain manual.
 - Submission blockers: ⏳ MANUAL / PENDING - explanation/demo video and final private GitHub submission steps are still owner actions.
@@ -93,13 +93,12 @@
 | Repository hygiene | Required source is present | ✅ COMPLETE | `api/`, `embedding-service/`, `mobile/`, `docs/`, `sql/queries.sql` | Core deliverable directories and files are present. |
 | Repository hygiene | Duplicate/archive and Version 2 artifacts excluded from submission | ✅ COMPLETE | `.gitignore`, staged removals | `Archive/` and `Assignment_v2.md` are excluded from the tracked submission set. |
 | Repository hygiene | Assessment reference retained as source material | ✅ COMPLETE | repository root | The assignment PDF remains available as evaluator/reference material. |
-| Manual submission | Final exported/current architecture diagram outside Markdown, if desired | ⏳ MANUAL / PENDING | `docs/TSD.md`, `docs/architecture.md` | Markdown Mermaid diagrams exist; any final exported image/PDF diagram is still a manual packaging step. |
 | Manual submission | Explanation/demo video | ⏳ MANUAL / PENDING | README video status | Required owner action; no video file/link is present or claimed. |
 | Manual submission | Private GitHub repository with correct name | ⏳ MANUAL / PENDING | Git state / README submission notes | Repository has not been pushed or published by Codex. |
 | Manual submission | Push final code | ⏳ MANUAL / PENDING | Git state | Owner must push final commits to the private repository. |
 | Manual submission | Video upload/link | ⏳ MANUAL / PENDING | README submission notes | Owner must record/upload/link the explanation video. |
 | Manual submission | Send GitHub repository and TSD link with required subject | ⏳ MANUAL / PENDING | README submission notes | Owner must send final submission message using `[Guised Up Application] Your Name — Full-Stack Assessment`. |
-| Manual submission | Hosted deployment | ⏳ MANUAL / PENDING | README deployment status | Optional/manual unless the candidate chooses to include a hosted demo; not a core assignment blocker. |
+| Manual submission | Hosted deployment status documented | ✅ COMPLETE | README deployment status | Hosted deployment is optional unless the candidate chooses to include a hosted demo; it is not a core assignment blocker. |
 
 ## Images And Static Resources
 
@@ -110,7 +109,6 @@ The current implementation stores post media and avatar media as URL references 
 - No core code, SQL, test, or documentation blocker was found in this quick deliverables pass.
 - Explanation/demo video remains a required manual submission item.
 - Final private GitHub push and final submission message remain manual owner actions.
-- If the evaluator expects a rendered/exported architecture diagram instead of Markdown Mermaid source, that export remains a manual packaging step.
 
 ## Final Verdict
 

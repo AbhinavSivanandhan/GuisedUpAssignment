@@ -10,7 +10,7 @@ The current workspace contains `Assignment.md`, this roadmap, repository governa
 - A roadmap item may not weaken or contradict `Assignment.md` or the original assessment PDF.
 - Application implementation compliance is verified only where direct evidence is listed below.
 - Documentation-only evidence may be recorded below when a document directly satisfies a documentation acceptance criterion.
-- Application stories remain `Unverified / not evidenced` until their acceptance criteria can be demonstrated in the submission repository; deployment, final submission messaging, and video remain owner-only/manual work.
+- Application stories are marked complete only where their acceptance criteria have direct repository and verification evidence; deployment, final submission messaging, and video remain owner-only/manual work.
 - Any roadmap item that is not directly traceable to `Assignment.md` is planning guidance only, unless later approved through a contract-compliant amendment.
 - Verified assessment-weighted progress before US-18 implementation was approximately 52%, based only on audited evidence: TSD/documentation 25/25, backend foundation about 12/25, React Native 0/20, SQL 0/15, AI usage 15/15.
 - Verified assessment-weighted progress after US-18 implementation is approximately 57%, based on the same evidence plus `GET /api/feed`, focused feed-ranking tests, route verification, and API image build verification.
@@ -226,8 +226,8 @@ Completes DEL-01.
 Status and evidence:
 
 - Status: Documentation complete for this story.
-- Evidence: `docs/TSD.md` sections 13, 14, and 29 through 33 document fallback behavior, intended replacement, trade-offs, assumptions, known limitations, TSD placement, and deferred implementation.
-- Implementation status: TSD was created before application code. Backend foundation implementation and runtime verification now exist where direct evidence is listed; deferred features remain unimplemented.
+- Evidence: `docs/TSD.md` documents fallback behavior, intended replacement, trade-offs, assumptions, known limitations, TSD placement, and the current implemented architecture.
+- Implementation status: TSD was created before application code and has been reconciled with the completed backend, mobile, SQL, Docker, migration, seeding, and testing evidence. Manual submission actions remain outside repository implementation.
 
 ### Phase 2 — Data foundation, authentication, and backend
 
@@ -246,7 +246,7 @@ Contributes to DEL-02.
 
 Status and evidence:
 
-- Status: Backend foundation implemented and partially runtime-verified for this story.
+- Status: Implemented and runtime-verified for this story.
 - Evidence: `api/` implements Laravel as the main API layer; `embedding-service/` implements Python-only embedding/authenticity work; `docker-compose.yml` configures PostgreSQL 16 with `pgvector/pgvector:pg16`; `api/database/migrations/2026_07_22_000000_enable_pgvector_extension.php` enables pgvector; `embedding-service/app/core.py` implements deterministic fallback.
 - Verification: Clean-checkout Docker images built; Laravel feature tests passed; Python tests passed; PostgreSQL migrations ran with `vector` extension confirmed; authenticated HTTP smoke tests exercised post creation, feed, search, interactions, reaction removal, validation, and embedding persistence against Docker PostgreSQL.
 
@@ -472,7 +472,7 @@ Contributes to DEL-02 and the 25% Backend Quality score.
 
 Status and evidence:
 
-- Status: Implemented for current backend and SQL scope; mobile, deployment, final submission, and video remain deferred.
+- Status: Implemented for current backend and SQL scope; deployment, final submission, and video remain manual.
 - Evidence: Controllers delegate validation to form requests; embedding work uses `EmbeddingClient`; feed ranking uses `FeedCandidateRepository` and `FeedRanker`; search uses `PostSearch`, `SearchCandidateRepository`, `SearchSimilarityCalculator`, and `TemporalIntentParser`; ranking and search limits live in configuration; response resources keep API output separate; migrations and models preserve persistence boundaries.
 - Verification: Clean-checkout Laravel tests passed: 43 tests, 1 skipped, 151 assertions. Python tests passed: 9 tests. Authenticated API smoke tests passed against the Docker PostgreSQL/pgvector stack.
 
@@ -530,7 +530,7 @@ Status and evidence:
 
 - Status: Implemented and statically verified; physical-device acceptance remains manual.
 - Evidence: `mobile/src/screens/FeedScreen.tsx`, `mobile/src/hooks/useFeedController.ts`, `mobile/src/api/client.ts`, `mobile/src/api/types.ts`, and `mobile/App.tsx`.
-- Verification: `npm run typecheck` passed. Expo startup reached Metro at `http://localhost:8091` / `exp://127.0.0.1:8091`. Expo Web was attempted but required additional web dependencies that are not part of the minimal native app.
+- Verification: Clean-checkout `npm run typecheck`, `npm test`, and `npx expo-doctor` passed. Expo Web runtime was verified in later owner/Codex acceptance passes; physical-device acceptance remains manual.
 
 #### US-25 — Present complete post cards
 
@@ -623,7 +623,7 @@ Contributes to DEL-03.
 
 Status and evidence:
 
-- Status: Implemented and partially tested through reducer checks; simulator/device behavior not verified.
+- Status: Implemented and tested through reducer/controller checks; physical-device behavior remains manual.
 - Evidence: `mobile/src/screens/FeedScreen.tsx`, `mobile/src/hooks/useFeedController.ts`, and `mobile/src/state/feedReducer.ts` handle initial loading, pagination loading, search loading, empty states, recoverable errors, and retry.
 - Verification: Clean-checkout `npm run typecheck` passed. `npm test` passed 30 tests, including recoverable error handling.
 

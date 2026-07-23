@@ -42,8 +42,7 @@ The mobile screen is not a persistence owner. It reads feed and search responses
 - Append page results without duplicates.
 - Retain at most five complete feed pages, or 100 posts, in memory after successful page appends or prepends.
 - Reload released earlier pages when scrolling back near the top and evict the opposite end.
-- Report retained posts separately from the API total.
-- Show subtle notices when earlier or later pages have been released.
+- Keep retained page counts and released-page state internal; do not expose cache diagnostics or post counts in the user-facing UI.
 - Prevent duplicate concurrent pagination requests.
 - Stop requesting when no next page remains.
 - Place a search bar at the top.

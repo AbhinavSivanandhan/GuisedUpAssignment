@@ -17,6 +17,9 @@ The repository currently contains:
 ├── docker-compose.yml
 ├── api/
 ├── embedding-service/
+├── mobile/
+├── sql/
+│   └── queries.sql
 └── docs/
     ├── governance.md
     ├── TSD.md
@@ -34,11 +37,11 @@ The repository currently contains:
         └── mobile-feed.md
 ```
 
-The current implementation contains a Laravel API foundation in `/api/`, a Python FastAPI embedding service in `/embedding-service/`, Docker Compose configuration, a root `README.md`, and a root `.env.example`. The Expo mobile app, SQL challenge file, deployment artifacts, submission video, and rendered/generated diagrams do not exist yet.
+The current implementation contains the Laravel API in `/api/`, the Python FastAPI embedding service in `/embedding-service/`, the Expo React Native app in `/mobile/`, raw SQL challenge answers in `/sql/queries.sql`, Docker Compose configuration, a root `README.md`, and environment examples. Deployment artifacts, the submission video, and final external submission message are not present because they are owner/manual submission steps.
 
-## Approved Future Structure
+## Implemented Repository Structure Reference
 
-Uncreated directories below are proposed, not present. Create them only in a batch that explicitly authorizes that work. The implemented backend uses `/api/` and `/embedding-service/`; the earlier `/apps/api/` and `/services/embeddings/` names remain conceptual equivalents from the pre-implementation plan.
+The implemented repository uses `/api/`, `/embedding-service/`, `/mobile/`, and `/sql/`. Earlier `/apps/api/`, `/apps/mobile/`, and `/services/embeddings/` names remain conceptual equivalents from the pre-implementation plan and should not be created as duplicate projects.
 
 ```text
 /
@@ -48,17 +51,16 @@ Uncreated directories below are proposed, not present. Create them only in a bat
 ├── .env.example
 ├── .gitignore
 ├── docker-compose.yml
-├── apps/
-│   ├── api/              # Conceptual equivalent now implemented as /api/
-│   └── mobile/
-├── services/
-│   └── embeddings/       # Conceptual equivalent now implemented as /embedding-service/
+├── api/
+├── embedding-service/
+├── mobile/
 ├── docs/
 │   ├── TSD.md
 │   ├── architecture.md
 │   ├── workspace.md
 │   ├── testing.md
 │   ├── ai-usage.md
+│   ├── production-readiness.md
 │   ├── decisions/
 │   └── features/
 ├── sql/
@@ -70,7 +72,8 @@ Uncreated directories below are proposed, not present. Create them only in a bat
 
 - `/api/`: Laravel API. Owns authentication, validation, orchestration, implemented post/feed/search/interaction endpoints, persistence, ranking, pagination, semantic-search orchestration, and API responses.
 - `/apps/api/`: Earlier documented conceptual path for the Laravel API; do not create a duplicate while `/api/` is the implemented location.
-- `/apps/mobile/`: Expo React Native TypeScript app. Owns presentation and client interactions.
+- `/mobile/`: Expo React Native TypeScript app. Owns presentation, client interactions, feed/search state, reactions, and mobile configuration.
+- `/apps/mobile/`: Earlier documented conceptual path for the mobile app; do not create a duplicate while `/mobile/` is the implemented location.
 - `/embedding-service/`: Python FastAPI embedding service. Owns embedding generation and explainable authenticity analysis.
 - `/services/embeddings/`: Earlier documented conceptual path for the embedding service; do not create a duplicate while `/embedding-service/` is the implemented location.
 - `/docs/`: Tracked project documentation, including TSD, architecture, testing, AI usage, workspace, decisions, and feature specs.
@@ -87,7 +90,7 @@ Project-owned files are intentional source, documentation, configuration, tests,
 
 Tracked documentation belongs in `/docs/`. Local-only artifacts, scratch notes, editor state, logs, caches, generated coverage, local environment files, and transient agent output must remain untracked unless explicitly approved as deliverables.
 
-Laravel files belong under `/api/` for the implemented repository. Mobile files will belong under `/mobile/` or `/apps/mobile/` only when that batch is authorized. Python embedding files belong under `/embedding-service/`. SQL challenge files belong under `/sql/`. Automation belongs under `/scripts/`. Documentation belongs under `/docs/`.
+Laravel files belong under `/api/` for the implemented repository. Mobile files belong under `/mobile/`. Python embedding files belong under `/embedding-service/`. SQL challenge files belong under `/sql/`. Automation belongs under `/scripts/`. Documentation belongs under `/docs/`.
 
 ## Approved Architecture Context
 
