@@ -55,9 +55,9 @@ More detailed Mermaid sources are in `docs/architecture.md`.
 
 ## 9. Database Schema
 
-The proposed schema uses these tables: `users`, `personal_access_tokens`, `posts`, and `interactions`.
+The implemented schema uses these tables: `users`, `personal_access_tokens`, `posts`, `interactions`, and `post_reactions`.
 
-`users`: Laravel user table with `id` primary key, `name`, unique `email`, password fields, timestamps, and any standard authentication fields required by Laravel.
+`users`: Laravel user table with `id` primary key, `name`, unique `email`, optional `avatar_url`, password fields, timestamps, and any standard authentication fields required by Laravel.
 
 `personal_access_tokens`: Laravel Sanctum token table with tokenable relationship, token name, hashed token, abilities, last-used timestamp, optional expiration, and timestamps.
 
@@ -85,10 +85,13 @@ The proposed schema uses these tables: `users`, `personal_access_tokens`, `posts
 | `user_id` | bigint | not null | Foreign key to `users.id` |
 | `post_id` | bigint | not null | Foreign key to `posts.id` |
 | `type` | enum / constrained varchar | not null | `view`, `reply`, or `reaction` |
+| `reaction_kind` | varchar | nullable | `like`, `support`, or `good_vibes` when `type = reaction`; older generic reaction rows may remain null |
 | `created_at` | timestamp | not null | Event time |
 | `updated_at` | timestamp | not null | Last update time |
 
-Deletion behavior: deleting a user should delete that user's posts, interactions, and Sanctum tokens. Deleting a post should delete its interactions. The implementation must avoid orphaned relationship-depth events.
+`post_reactions`: current viewer reaction state, separate from raw interaction history, with `id`, `user_id`, `post_id`, `reaction_kind`, and timestamps. A unique index on `(user_id, post_id)` makes current reaction state idempotent while preserving repeated raw `interactions` rows for ranking and SQL reporting. The active reaction catalog is currently `like`, `support`, and `good_vibes`.
+
+Deletion behavior: deleting a user should delete that user's posts, interactions, current reactions, and Sanctum tokens. Deleting a post should delete its interactions and current reactions. The implementation must avoid orphaned relationship-depth events.
 
 ## 10. Relationships and Indexes
 
@@ -98,8 +101,11 @@ Relationships:
 - `users` has many `interactions`.
 - `posts` belongs to `users`.
 - `posts` has many `interactions`.
+- `posts` has many `post_reactions`.
 - `interactions` belongs to `users`.
 - `interactions` belongs to `posts`.
+- `post_reactions` belongs to `users`.
+- `post_reactions` belongs to `posts`.
 
 Required indexes:
 
@@ -168,6 +174,8 @@ Request query: optional `page` parameter.
 
 Success: `200 OK` with ranked posts and pagination metadata or links. Feed returns 20 results per page when a full page is available.
 
+Each result includes `viewer_has_reacted`, `viewer_reaction_kind`, and author `avatar_url` scoped to the authenticated viewer when available.
+
 Errors: `401` unauthenticated, `422` invalid pagination input.
 
 Data impact: read-only.
@@ -179,6 +187,8 @@ Authentication: Sanctum bearer token required.
 Validation: `q` is required, string, trimmed, and non-empty.
 
 Success: `200 OK` with at most 10 semantically relevant posts, author information, post text, optional image URL, creation time, similarity score, embedding mode, and metadata describing any temporal filter.
+
+Each result includes `viewer_has_reacted`, `viewer_reaction_kind`, and author `avatar_url` scoped to the authenticated viewer when available.
 
 Errors: `401` unauthenticated, `422` empty query, `503` embedding service unavailable when no fallback is allowed.
 
@@ -195,17 +205,28 @@ Request:
 ```json
 {
   "post_id": 123,
-  "type": "reaction"
+  "type": "reaction",
+  "reaction_kind": "like"
 }
 ```
 
-Validation: `post_id` must identify an existing post. `type` accepts only `view`, `reply`, or `reaction`.
+Validation: `post_id` must identify an existing post. `type` accepts only `view`, `reply`, or `reaction`. When `type = reaction`, `reaction_kind` accepts `like`, `support`, or `good_vibes`; older clients that omit `reaction_kind` default to `like`.
 
 Success: `201 Created` with interaction id, post id, type, and timestamp.
 
 Errors: `401` unauthenticated and `422` validation errors for invalid type or missing/nonexistent post.
 
 Data impact: persists a raw interaction event for relationship-depth ranking and SQL reporting.
+
+For `type = reaction`, the same request also records raw event history and activates or switches the authenticated user's current reaction state for that post.
+
+### `DELETE /api/posts/{post}/reaction`
+
+Authentication: Sanctum bearer token required.
+
+Success: `200 OK` with post id, `viewer_has_reacted: false`, and `viewer_reaction_kind: null`.
+
+Data impact: removes only the authenticated user's current reaction state. It does not delete raw `interactions` rows and is idempotent.
 
 ## 17. Feed-Ranking Logic in Plain English
 

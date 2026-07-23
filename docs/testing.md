@@ -80,6 +80,7 @@ final_score =
 - Verify invalid `post_id` and invalid `type` fail.
 - Verify raw events are persisted for relationship-depth and SQL reporting.
 - Current evidence: implemented Laravel tests cover invalid type, missing post, valid persistence, and repeated raw event preservation.
+- Current reaction-state evidence: implemented Laravel tests cover activation of current reaction state from `POST /api/interactions`, reaction-kind defaulting, all supported reaction kinds, invalid reaction-kind validation, switching current reaction kind while preserving raw events, authenticated undo with `DELETE /api/posts/{post}/reaction`, idempotent undo, viewer-scoped current-state deletion, and `viewer_has_reacted` / `viewer_reaction_kind` hydration in feed and search responses.
 
 ## Python Embedding Service
 
@@ -89,7 +90,16 @@ final_score =
 ## React Native Component and Integration Behavior
 
 - Component or integration tests should cover feed loading, post card fields, relative time, reaction button states, infinite scrolling, inline search results, empty state, error state, and retry behavior.
-- Current evidence: the mobile app under `mobile/` separates the API client, feed/search state hook, reducer, reusable `PostCard`, screen composition, and theme tokens. `npm run typecheck` passed. `npm test` passed 7 reducer tests covering pagination deduplication, search-mode switching, stale search-response rejection, stale search-error rejection, recoverable error handling, pagination metadata, and duplicate filtering. Expo startup reached Metro on `http://localhost:8091` / `exp://127.0.0.1:8091`. Expo Web was attempted but required additional web dependencies not included in the minimal native app. Simulator/device rendering was not verified.
+- Current evidence: the mobile app under `mobile/` separates the API client, feed/search state hook, reducer, reusable `PostCard`, screen composition, and theme tokens. `npm run typecheck` passed. `npm test` passed 20 tests covering API error mapping, request timeout, typed reaction API calls, reaction undo API calls, pagination deduplication, search-mode switching, stale search-response rejection, stale search-error rejection, recoverable error handling, pagination metadata, duplicate filtering, page-aligned feed retention, bidirectional page-window loading, partial final page retention, refresh reset, reaction success/failure rollback, and consistent reaction updates across feed and search state.
+
+## Mobile Feed Memory Policy
+
+- The mobile reducer retains at most five complete feed pages, equal to 100 posts at the API's 20-post page size.
+- Earlier complete pages are released only after a later page has appended successfully.
+- Later complete pages are released only after an earlier page has prepended successfully.
+- The next server page cursor remains independent from retained rows.
+- Search results remain independent and limited to the API's top 10 results.
+- A subtle notice is shown when earlier or later pages have been released.
 
 ## SQL Challenge Verification
 

@@ -58,3 +58,57 @@ test('API client times out slow requests', async () => {
     return true;
   });
 });
+
+test('API client removes a reaction through the post undo route', async () => {
+  const calls: Array<{ url: string; method?: string }> = [];
+  const client = createApiClient('http://localhost:8000', 'token', {
+    fetchImpl: async (url, init) => {
+      calls.push({ url: String(url), method: init?.method });
+      return new Response(JSON.stringify({ data: { post_id: 42, viewer_has_reacted: false } }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  });
+
+  await client.removeReaction(42);
+
+  assert.deepEqual(calls, [
+    {
+      url: 'http://localhost:8000/api/posts/42/reaction',
+      method: 'DELETE'
+    }
+  ]);
+});
+
+test('API client sends the selected reaction kind with reaction interactions', async () => {
+  const calls: Array<{ url: string; method?: string; body?: unknown }> = [];
+  const client = createApiClient('http://localhost:8000', 'token', {
+    fetchImpl: async (url, init) => {
+      calls.push({
+        url: String(url),
+        method: init?.method,
+        body: init?.body ? JSON.parse(String(init.body)) : null
+      });
+
+      return new Response(JSON.stringify({ data: { id: 1 } }), {
+        status: 201,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  });
+
+  await client.reactToPost(42, 'good_vibes');
+
+  assert.deepEqual(calls, [
+    {
+      url: 'http://localhost:8000/api/interactions',
+      method: 'POST',
+      body: {
+        post_id: 42,
+        type: 'reaction',
+        reaction_kind: 'good_vibes'
+      }
+    }
+  ]);
+});

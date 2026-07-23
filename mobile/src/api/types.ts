@@ -1,16 +1,22 @@
 export type Author = {
   id: number;
   name: string | null;
+  avatar_url?: string | null;
 };
+
+export type ReactionKind = 'like' | 'support' | 'good_vibes';
 
 export type Post = {
   id: number;
   author: Author;
   text: string;
   image_url: string | null;
+  viewer_has_reacted?: boolean;
+  viewer_reaction_kind?: ReactionKind | null;
   created_at: string | null;
   updated_at?: string | null;
   similarity_score?: number;
+  __feedPage?: number;
 };
 
 export type PaginationLink = {

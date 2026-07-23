@@ -81,7 +81,14 @@ sequenceDiagram
   M->>L: POST /api/interactions with post_id and type
   L->>L: Validate Sanctum token, post_id, and type in view/reply/reaction
   L->>DB: Persist raw interaction event
+  opt type is reaction
+    L->>DB: Upsert current post_reactions row for viewer and post
+  end
   L-->>M: 201 Created
+
+  M->>L: DELETE /api/posts/{post}/reaction
+  L->>DB: Delete only viewer's current post_reactions row
+  L-->>M: 200 OK with viewer_has_reacted false
 ```
 
 ## Entity-Relationship Diagram
@@ -90,13 +97,16 @@ sequenceDiagram
 erDiagram
   users ||--o{ posts : authors
   users ||--o{ interactions : performs
+  users ||--o{ post_reactions : toggles
   users ||--o{ personal_access_tokens : owns
   posts ||--o{ interactions : receives
+  posts ||--o{ post_reactions : has_current
 
   users {
     bigint id PK
     string name
     string email UK
+    string avatar_url
     string password
     timestamp created_at
     timestamp updated_at
@@ -134,6 +144,14 @@ erDiagram
     bigint user_id FK
     bigint post_id FK
     string type
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  post_reactions {
+    bigint id PK
+    bigint user_id FK
+    bigint post_id FK
     timestamp created_at
     timestamp updated_at
   }

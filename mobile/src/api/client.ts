@@ -1,4 +1,4 @@
-import type { FeedResponse, SearchResponse } from './types';
+import type { FeedResponse, ReactionKind, SearchResponse } from './types';
 
 export type ApiErrorKind = 'auth' | 'validation' | 'timeout' | 'network' | 'server' | 'unknown';
 
@@ -20,7 +20,8 @@ type CreateApiClientOptions = {
 export type ApiClient = {
   fetchFeed(page: number): Promise<FeedResponse>;
   searchPosts(query: string): Promise<SearchResponse>;
-  reactToPost(postId: number): Promise<void>;
+  reactToPost(postId: number, reactionKind: ReactionKind): Promise<void>;
+  removeReaction(postId: number): Promise<void>;
 };
 
 const DEFAULT_TIMEOUT_MS = 10000;
@@ -111,13 +112,19 @@ export function createApiClient(baseUrl: string, token: string, options: CreateA
     searchPosts(query: string) {
       return request<SearchResponse>(`/api/search?q=${encodeURIComponent(query)}`);
     },
-    async reactToPost(postId: number) {
+    async reactToPost(postId: number, reactionKind: ReactionKind) {
       await request('/api/interactions', {
         method: 'POST',
         body: JSON.stringify({
           post_id: postId,
-          type: 'reaction'
+          type: 'reaction',
+          reaction_kind: reactionKind
         })
+      });
+    },
+    async removeReaction(postId: number) {
+      await request(`/api/posts/${postId}/reaction`, {
+        method: 'DELETE'
       });
     }
   };

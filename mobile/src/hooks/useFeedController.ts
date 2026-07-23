@@ -3,8 +3,15 @@ import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import { createApiClient } from '../api/client';
 import { getApiErrorMessage } from '../api/client';
 import type { ApiClient } from '../api/client';
+import type { ReactionKind } from '../api/types';
 import { config } from '../config/env';
-import { canRequestNextFeedPage, feedReducer, initialFeedState } from '../state/feedReducer';
+import {
+  canRequestNextFeedPage,
+  canRequestPreviousFeedPage,
+  feedReducer,
+  flattenRetainedPages,
+  initialFeedState
+} from '../state/feedReducer';
 
 type UseFeedControllerOptions = {
   apiClient?: ApiClient;
@@ -22,23 +29,32 @@ export function useFeedController(options: UseFeedControllerOptions = {}) {
   );
 
   const loadFeedPage = useCallback(
-    async (page: number) => {
-      if (loadingPagesRef.current.has(page) || (page > 1 && (!state.hasNextPage || state.paginationLoading))) {
+    async (page: number, direction: 'initial' | 'next' | 'previous' = page === 1 ? 'initial' : 'next') => {
+      if (page < 1 || loadingPagesRef.current.has(page)) {
+        return;
+      }
+
+      if (direction === 'next' && state.lastServerPage !== null && page > state.lastServerPage) {
+        return;
+      }
+
+      if (direction === 'previous' && state.firstRetainedPage !== null && page >= state.firstRetainedPage) {
         return;
       }
 
       loadingPagesRef.current.add(page);
-      dispatch({ type: 'feed/loadStart', page });
+      dispatch({ type: 'feed/loadStart', page, direction });
 
       try {
         const response = await apiClient.fetchFeed(page);
         if (mountedRef.current) {
-          dispatch({ type: 'feed/loadSuccess', response });
+          dispatch({ type: 'feed/loadSuccess', response, direction });
         }
       } catch (error) {
         if (mountedRef.current) {
           dispatch({
             type: 'feed/loadError',
+            direction,
             message: getApiErrorMessage(error)
           });
         }
@@ -46,25 +62,40 @@ export function useFeedController(options: UseFeedControllerOptions = {}) {
         loadingPagesRef.current.delete(page);
       }
     },
-    [apiClient, state.hasNextPage, state.paginationLoading]
+    [apiClient, state.firstRetainedPage, state.lastServerPage]
   );
 
   const refreshFeed = useCallback(() => {
-    void loadFeedPage(1);
+    void loadFeedPage(1, 'initial');
   }, [loadFeedPage]);
 
   const loadNextPage = useCallback(() => {
-    if (canRequestNextFeedPage(state, loadingPagesRef.current.size)) {
-      void loadFeedPage(state.page + 1);
+    const nextPage = (state.lastRetainedPage ?? 0) + 1;
+    if (canRequestNextFeedPage(state, loadingPagesRef.current.has(nextPage))) {
+      void loadFeedPage(nextPage, 'next');
     }
   }, [
     loadFeedPage,
-    state.feedPosts.length,
-    state.hasNextPage,
+    state.retainedPages,
     state.initialLoading,
+    state.lastRetainedPage,
+    state.lastServerPage,
+    state.loadingNext,
     state.mode,
-    state.page,
-    state.paginationLoading
+  ]);
+
+  const loadPreviousPage = useCallback(() => {
+    const previousPage = (state.firstRetainedPage ?? 1) - 1;
+    if (canRequestPreviousFeedPage(state, loadingPagesRef.current.has(previousPage))) {
+      void loadFeedPage(previousPage, 'previous');
+    }
+  }, [
+    loadFeedPage,
+    state.firstRetainedPage,
+    state.initialLoading,
+    state.loadingPrevious,
+    state.mode,
+    state.retainedPages
   ]);
 
   const updateQuery = useCallback(
@@ -119,23 +150,39 @@ export function useFeedController(options: UseFeedControllerOptions = {}) {
   }, [loadFeedPage, state.mode, state.query, updateQuery]);
 
   const reactToPost = useCallback(
-    async (postId: number) => {
-      if (state.reactingPostIds.includes(postId)) {
+    async (postId: number, reactionKind: ReactionKind) => {
+      if (state.pendingReactions[postId]) {
         return;
       }
 
-      dispatch({ type: 'reaction/start', postId });
+      const feedPosts = flattenRetainedPages(state.retainedPages);
+      const post = [...feedPosts, ...state.searchPosts].find((item) => item.id === postId);
+      const previousKind = post?.viewer_reaction_kind ?? null;
+      const nextKind = previousKind === reactionKind ? null : reactionKind;
+
+      dispatch({
+        type: 'reaction/start',
+        postId,
+        mode: nextKind === null ? 'removing' : 'reacting',
+        nextKind
+      });
 
       try {
-        await apiClient.reactToPost(postId);
+        if (nextKind) {
+          await apiClient.reactToPost(postId, nextKind);
+        } else {
+          await apiClient.removeReaction(postId);
+        }
+
         if (mountedRef.current) {
-          dispatch({ type: 'reaction/success', postId });
+          dispatch({ type: 'reaction/success', postId, viewerReactionKind: nextKind });
         }
       } catch (error) {
         if (mountedRef.current) {
           dispatch({
             type: 'reaction/error',
             postId,
+            previousKind,
             message: getApiErrorMessage(error)
           });
         }
@@ -145,11 +192,11 @@ export function useFeedController(options: UseFeedControllerOptions = {}) {
         }
       }
     },
-    [apiClient, state.reactingPostIds]
+    [apiClient, state.pendingReactions, state.retainedPages, state.searchPosts]
   );
 
   useEffect(() => {
-    void loadFeedPage(1);
+    void loadFeedPage(1, 'initial');
     return () => {
       mountedRef.current = false;
       if (searchTimerRef.current) {
@@ -160,8 +207,9 @@ export function useFeedController(options: UseFeedControllerOptions = {}) {
 
   return {
     state,
-    displayedPosts: state.mode === 'search' ? state.searchPosts : state.feedPosts,
+    displayedPosts: state.mode === 'search' ? state.searchPosts : flattenRetainedPages(state.retainedPages),
     loadNextPage,
+    loadPreviousPage,
     refreshFeed,
     retryCurrentOperation,
     updateQuery,

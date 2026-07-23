@@ -1,18 +1,26 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import type { Post } from '../api/types';
-import { colors, radii, spacing, typography } from '../theme/tokens';
+import type { Post, ReactionKind } from '../api/types';
+import { ReactionControl } from './ReactionControl';
+import type { ReactionPendingMode } from '../state/feedReducer';
+import { radii, spacing, typography } from '../theme/tokens';
+import type { ThemeColors } from '../theme/tokens';
 import { relativeTime } from '../utils/time';
 
 type PostCardProps = {
   post: Post;
-  reacting: boolean;
-  reacted: boolean;
-  onReact(postId: number): void;
+  pendingMode?: ReactionPendingMode;
+  reactionPickerOpen: boolean;
+  theme: ThemeColors;
+  onReact(postId: number, reactionKind: ReactionKind): void;
+  onOpenReactionPicker(postId: number): void;
+  onCloseReactionPicker(): void;
 };
 
-const avatarColors = ['#DCEFE7', '#F4E2BE', '#E9D9F2', '#D8E6F3', '#F6D8CE'];
+const COLLAPSED_LINES = 5;
+const BODY_LINE_HEIGHT = 24;
+const avatarColors = ['#DCEFE7', '#F4E2BE', '#DCE8D4', '#D8E6F3', '#F6D8CE'];
 
 function avatarColorFor(id: number): string {
   return avatarColors[Math.abs(id) % avatarColors.length];
@@ -31,22 +39,66 @@ function canLoadImageUrl(value: string | null): boolean {
   }
 }
 
-export function PostCard({ post, reacting, reacted, onReact }: PostCardProps) {
+export function PostCard({
+  post,
+  pendingMode,
+  reactionPickerOpen,
+  theme,
+  onReact,
+  onOpenReactionPicker,
+  onCloseReactionPicker
+}: PostCardProps) {
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const authorName = post.author.name ?? 'Guised Up user';
-  const reactionLabel = reacting ? 'Sending...' : reacted ? 'Reacted' : 'React';
+  const activeKind = post.viewer_reaction_kind ?? (post.viewer_has_reacted ? 'like' : null);
   const [imageFailed, setImageFailed] = useState(false);
+  const [avatarFailed, setAvatarFailed] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [fullLineCount, setFullLineCount] = useState<number | null>(null);
+  const [measuredPostKey, setMeasuredPostKey] = useState<string | null>(null);
+  const postKey = `${post.id}:${post.text}`;
   const canLoadImage = canLoadImageUrl(post.image_url);
+  const canLoadAvatar = canLoadImageUrl(post.author.avatar_url ?? null);
+  const canToggleText = fullLineCount !== null && fullLineCount > COLLAPSED_LINES;
 
   useEffect(() => {
     setImageFailed(false);
   }, [post.image_url]);
 
+  useEffect(() => {
+    setAvatarFailed(false);
+  }, [post.author.avatar_url]);
+
+  useEffect(() => {
+    setExpanded(false);
+    setFullLineCount(null);
+    setMeasuredPostKey(null);
+  }, [post.id, post.text]);
+
+  function recordFullTextLayout(lineCount: number) {
+    if (measuredPostKey === postKey) {
+      return;
+    }
+
+    setFullLineCount(lineCount);
+    setMeasuredPostKey(postKey);
+  }
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <View style={[styles.avatar, { backgroundColor: avatarColorFor(post.author.id) }]}>
-          <Text style={styles.avatarText}>{authorName.slice(0, 1).toUpperCase()}</Text>
-        </View>
+        {canLoadAvatar && !avatarFailed ? (
+          <Image
+            accessibilityLabel={`${authorName} avatar`}
+            onError={() => setAvatarFailed(true)}
+            source={{ uri: post.author.avatar_url ?? '' }}
+            style={styles.avatarImage}
+          />
+        ) : (
+          <View style={[styles.avatar, { backgroundColor: avatarColorFor(post.author.id) }]}>
+            <Text style={styles.avatarText}>{authorName.slice(0, 1).toUpperCase()}</Text>
+          </View>
+        )}
         <View style={styles.authorBlock}>
           <Text style={styles.authorName} numberOfLines={1}>
             {authorName}
@@ -55,7 +107,32 @@ export function PostCard({ post, reacting, reacted, onReact }: PostCardProps) {
         </View>
       </View>
 
-      <Text style={styles.body}>{post.text}</Text>
+      <Text
+        onLayout={
+          measuredPostKey !== postKey
+            ? (event) => recordFullTextLayout(Math.round(event.nativeEvent.layout.height / BODY_LINE_HEIGHT))
+            : undefined
+        }
+        onTextLayout={measuredPostKey !== postKey ? (event) => recordFullTextLayout(event.nativeEvent.lines.length) : undefined}
+        style={styles.body}
+        numberOfLines={measuredPostKey === postKey && !expanded && canToggleText ? COLLAPSED_LINES : undefined}
+      >
+        {post.text}
+      </Text>
+      {canToggleText ? (
+        <Pressable
+          accessibilityLabel={expanded ? 'Show less post text' : 'Read full post text'}
+          accessibilityRole="button"
+          onPress={() => setExpanded((value) => !value)}
+          style={(pressState) => [
+            styles.readMore,
+            (pressState as { focused?: boolean }).focused ? styles.focused : null,
+            pressState.pressed ? styles.pressed : null
+          ]}
+        >
+          <Text style={styles.readMoreText}>{expanded ? 'Show less' : 'Read more'}</Text>
+        </Pressable>
+      ) : null}
 
       {post.image_url && canLoadImage && !imageFailed ? (
         <Image
@@ -69,25 +146,22 @@ export function PostCard({ post, reacting, reacted, onReact }: PostCardProps) {
         <View style={styles.imageFallback}>
           <Text style={styles.imageFallbackTitle}>Image unavailable</Text>
           <Text style={styles.imageFallbackText} numberOfLines={1}>
-            The post is still available.
+            The post is still here.
           </Text>
         </View>
       ) : null}
 
       <View style={styles.actions}>
-        <Pressable
-          accessibilityRole="button"
-          disabled={reacting}
-          onPress={() => onReact(post.id)}
-          style={({ pressed }) => [
-            styles.reactButton,
-            pressed && !reacting ? styles.reactButtonPressed : null,
-            reacting ? styles.reactButtonDisabled : null,
-            reacted ? styles.reactButtonDone : null
-          ]}
-        >
-          <Text style={[styles.reactButtonText, reacted ? styles.reactButtonDoneText : null]}>{reactionLabel}</Text>
-        </Pressable>
+        <ReactionControl
+          activeKind={activeKind}
+          controlId={`reaction-control-${post.id}`}
+          expanded={reactionPickerOpen}
+          onClose={onCloseReactionPicker}
+          onOpen={() => onOpenReactionPicker(post.id)}
+          onSelect={(kind) => onReact(post.id, kind)}
+          pendingMode={pendingMode}
+          theme={theme}
+        />
         {typeof post.similarity_score === 'number' ? (
           <Text style={styles.searchScore}>Match {Math.round(post.similarity_score * 100)}%</Text>
         ) : null}
@@ -96,115 +170,126 @@ export function PostCard({ post, reacting, reacted, onReact }: PostCardProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    marginHorizontal: spacing.md,
-    marginVertical: spacing.sm,
-    padding: spacing.lg,
-    boxShadow: '0 8px 22px rgba(30, 27, 24, 0.08)',
-    elevation: 2
-  },
-  header: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginBottom: spacing.md
-  },
-  avatar: {
-    alignItems: 'center',
-    backgroundColor: colors.accentSoft,
-    borderRadius: 20,
-    height: 40,
-    justifyContent: 'center',
-    width: 40
-  },
-  avatarText: {
-    color: colors.accentDark,
-    fontSize: typography.heading,
-    fontWeight: '700'
-  },
-  authorBlock: {
-    flex: 1,
-    minWidth: 0
-  },
-  authorName: {
-    color: colors.text,
-    fontSize: typography.body,
-    fontWeight: '700'
-  },
-  time: {
-    color: colors.muted,
-    fontSize: typography.small,
-    marginTop: 2
-  },
-  body: {
-    color: colors.text,
-    fontSize: 16,
-    lineHeight: 24
-  },
-  image: {
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: radii.md,
-    height: 210,
-    marginTop: spacing.md,
-    width: '100%'
-  },
-  imageFallback: {
-    backgroundColor: colors.surfaceMuted,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    marginTop: spacing.md,
-    padding: spacing.lg
-  },
-  imageFallbackTitle: {
-    color: colors.inkSoft,
-    fontSize: typography.small,
-    fontWeight: '800'
-  },
-  imageFallbackText: {
-    color: colors.muted,
-    fontSize: typography.small,
-    marginTop: spacing.xs
-  },
-  actions: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: spacing.lg
-  },
-  reactButton: {
-    backgroundColor: colors.accent,
-    borderRadius: radii.sm,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm
-  },
-  reactButtonPressed: {
-    opacity: 0.85
-  },
-  reactButtonDisabled: {
-    opacity: 0.6
-  },
-  reactButtonDone: {
-    backgroundColor: colors.accentSoft,
-    borderColor: colors.accent,
-    borderWidth: 1
-  },
-  reactButtonText: {
-    color: colors.surface,
-    fontSize: typography.small,
-    fontWeight: '700'
-  },
-  reactButtonDoneText: {
-    color: colors.accentDark
-  },
-  searchScore: {
-    color: colors.muted,
-    fontSize: typography.small,
-    fontWeight: '600'
-  }
-});
+function createStyles(theme: ThemeColors) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: theme.surfaceRaised,
+      borderColor: theme.border,
+      borderRadius: radii.xl,
+      borderWidth: 1,
+      marginHorizontal: spacing.md,
+      marginVertical: spacing.sm,
+      overflow: 'visible',
+      padding: spacing.lg,
+      boxShadow: `0 8px 20px ${theme.shadow}`,
+      elevation: 2,
+      zIndex: 1
+    },
+    header: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: spacing.md,
+      marginBottom: spacing.md
+    },
+    avatar: {
+      alignItems: 'center',
+      borderColor: theme.border,
+      borderRadius: 22,
+      borderWidth: 1,
+      height: 44,
+      justifyContent: 'center',
+      width: 44
+    },
+    avatarImage: {
+      backgroundColor: theme.surfaceSubtle,
+      borderRadius: 22,
+      height: 44,
+      width: 44
+    },
+    avatarText: {
+      color: '#184837',
+      fontSize: typography.heading,
+      fontWeight: '800'
+    },
+    authorBlock: {
+      flex: 1,
+      minWidth: 0
+    },
+    authorName: {
+      color: theme.text,
+      fontSize: typography.body,
+      fontWeight: '800'
+    },
+    time: {
+      color: theme.textMuted,
+      fontSize: typography.small,
+      marginTop: 2
+    },
+    body: {
+      color: theme.text,
+      fontSize: 16,
+      lineHeight: BODY_LINE_HEIGHT
+    },
+    readMore: {
+      alignSelf: 'flex-start',
+      borderColor: 'transparent',
+      borderRadius: radii.sm,
+      borderWidth: 2,
+      marginTop: spacing.sm,
+      minHeight: 36,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xs
+    },
+    readMoreText: {
+      color: theme.primary,
+      fontSize: typography.small,
+      fontWeight: '800'
+    },
+    image: {
+      backgroundColor: theme.surfaceSubtle,
+      borderRadius: radii.lg,
+      height: 220,
+      marginTop: spacing.md,
+      width: '100%'
+    },
+    imageFallback: {
+      backgroundColor: theme.surfaceSubtle,
+      borderColor: theme.border,
+      borderRadius: radii.lg,
+      borderWidth: 1,
+      marginTop: spacing.md,
+      padding: spacing.lg
+    },
+    imageFallbackTitle: {
+      color: theme.text,
+      fontSize: typography.small,
+      fontWeight: '800'
+    },
+    imageFallbackText: {
+      color: theme.textMuted,
+      fontSize: typography.small,
+      marginTop: spacing.xs
+    },
+    actions: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: spacing.lg,
+      overflow: 'visible',
+      zIndex: 20
+    },
+    searchScore: {
+      color: theme.textMuted,
+      fontSize: typography.small,
+      fontWeight: '700',
+      paddingTop: spacing.sm
+    },
+    focused: {
+      borderColor: theme.focusRing,
+      boxShadow: `0 0 0 3px ${theme.primaryContainer}`
+    },
+    pressed: {
+      opacity: 0.82
+    }
+  });
+}

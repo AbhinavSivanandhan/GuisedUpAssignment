@@ -21,6 +21,7 @@ class EmbeddingPostSearch implements PostSearch
 
         return new SearchResults(
             posts: $this->candidates->topSimilar(
+                $user,
                 $analysis->embedding,
                 (int) config('search.limit', 10),
                 $intent->startsAt,

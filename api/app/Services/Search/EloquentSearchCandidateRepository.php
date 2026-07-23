@@ -3,6 +3,7 @@
 namespace App\Services\Search;
 
 use App\Models\Post;
+use App\Models\User;
 use App\Services\PgVector;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
@@ -15,19 +16,21 @@ class EloquentSearchCandidateRepository implements SearchCandidateRepository
     }
 
     public function topSimilar(
+        User $viewer,
         array $queryEmbedding,
         int $limit,
         ?CarbonInterface $startsAt = null,
         ?CarbonInterface $endsAt = null
     ): Collection {
         if (DB::getDriverName() === 'pgsql') {
-            return $this->topSimilarWithPgvector($queryEmbedding, $limit, $startsAt, $endsAt);
+            return $this->topSimilarWithPgvector($viewer, $queryEmbedding, $limit, $startsAt, $endsAt);
         }
 
-        return $this->topSimilarInMemory($queryEmbedding, $limit, $startsAt, $endsAt);
+        return $this->topSimilarInMemory($viewer, $queryEmbedding, $limit, $startsAt, $endsAt);
     }
 
     private function topSimilarWithPgvector(
+        User $viewer,
         array $queryEmbedding,
         int $limit,
         ?CarbonInterface $startsAt,
@@ -37,6 +40,14 @@ class EloquentSearchCandidateRepository implements SearchCandidateRepository
 
         return $this->baseQuery($startsAt, $endsAt)
             ->with('user')
+            ->with([
+                'reactions' => fn ($query) => $query
+                    ->where('user_id', $viewer->id)
+                    ->select('id', 'user_id', 'post_id', 'reaction_kind'),
+            ])
+            ->withExists([
+                'reactions as viewer_has_reacted' => fn ($query) => $query->where('user_id', $viewer->id),
+            ])
             ->select('posts.*')
             ->selectRaw('1 - (embedding <=> ?::vector) as similarity_score', [$vector])
             ->orderByRaw('embedding <=> ?::vector asc', [$vector])
@@ -47,6 +58,7 @@ class EloquentSearchCandidateRepository implements SearchCandidateRepository
     }
 
     private function topSimilarInMemory(
+        User $viewer,
         array $queryEmbedding,
         int $limit,
         ?CarbonInterface $startsAt,
@@ -54,6 +66,14 @@ class EloquentSearchCandidateRepository implements SearchCandidateRepository
     ): Collection {
         return $this->baseQuery($startsAt, $endsAt)
             ->with('user')
+            ->with([
+                'reactions' => fn ($query) => $query
+                    ->where('user_id', $viewer->id)
+                    ->select('id', 'user_id', 'post_id', 'reaction_kind'),
+            ])
+            ->withExists([
+                'reactions as viewer_has_reacted' => fn ($query) => $query->where('user_id', $viewer->id),
+            ])
             ->get()
             ->map(function (Post $post) use ($queryEmbedding): Post {
                 $post->setAttribute('similarity_score', $this->similarity->score($queryEmbedding, $post));

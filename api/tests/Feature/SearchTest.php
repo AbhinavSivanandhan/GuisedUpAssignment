@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ReactionKind;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -60,6 +61,41 @@ class SearchTest extends TestCase
         );
 
         $this->assertSame([$semanticMatch->id, $keywordMatch->id], $ids);
+    }
+
+    public function test_search_hydrates_viewer_reaction_state_and_author_avatar(): void
+    {
+        $viewer = $this->user('viewer@example.test');
+        $otherViewer = $this->user('other-viewer@example.test');
+        $author = $this->user('author@example.test', [
+            'avatar_url' => 'https://images.example.test/avatar.jpg',
+        ]);
+        $reacted = $this->postFor($author, ['embedding' => $this->vectorLiteral(1.0, 0.0)]);
+        $notReacted = $this->postFor($author, ['embedding' => $this->vectorLiteral(0.9, 0.1)]);
+        $viewer->postReactions()->create([
+            'post_id' => $reacted->id,
+            'reaction_kind' => ReactionKind::GoodVibes->value,
+        ]);
+        $otherViewer->postReactions()->create([
+            'post_id' => $notReacted->id,
+            'reaction_kind' => ReactionKind::Support->value,
+        ]);
+
+        Http::fake([
+            '*embedding-service.test/analyze' => Http::response($this->analysisPayload($this->vector(1.0, 0.0)), 200),
+        ]);
+        Sanctum::actingAs($viewer);
+
+        $response = $this->getJson('/api/search?q=travel')
+            ->assertOk()
+            ->assertJsonPath('data.0.author.avatar_url', 'https://images.example.test/avatar.jpg')
+            ->json('data');
+
+        $byId = collect($response)->keyBy('id');
+        $this->assertTrue($byId[$reacted->id]['viewer_has_reacted']);
+        $this->assertSame(ReactionKind::GoodVibes->value, $byId[$reacted->id]['viewer_reaction_kind']);
+        $this->assertFalse($byId[$notReacted->id]['viewer_has_reacted']);
+        $this->assertNull($byId[$notReacted->id]['viewer_reaction_kind']);
     }
 
     public function test_search_returns_at_most_10_results(): void
@@ -142,13 +178,13 @@ class SearchTest extends TestCase
             ->assertJsonPath('message', 'Semantic search is unavailable.');
     }
 
-    private function user(string $email): User
+    private function user(string $email, array $attributes = []): User
     {
-        return User::query()->create([
+        return User::query()->create(array_merge([
             'name' => $email,
             'email' => $email,
             'password' => 'password',
-        ]);
+        ], $attributes));
     }
 
     private function postFor(User $author, array $attributes = []): Post

@@ -13,6 +13,7 @@ class InteractionResource extends JsonResource
             'id' => $this->id,
             'post_id' => $this->post_id,
             'type' => $this->type,
+            'reaction_kind' => $this->reaction_kind,
             'created_at' => $this->created_at?->toISOString(),
         ];
     }

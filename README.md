@@ -152,6 +152,16 @@ npm run start -- --web --port 8091
 
 The screen fetches `GET /api/feed`, paginates with infinite scroll, renders post cards with avatar placeholder, username, post text, relative time, and reaction button, calls `POST /api/interactions` for reactions, and calls `GET /api/search` from the inline search bar.
 
+Reaction buttons hydrate from `viewer_has_reacted`. Pressing `React` records a raw reaction interaction and activates current reaction state; pressing `Reacted ✓` calls `DELETE /api/posts/{post}/reaction` to remove only the current reaction state. Raw interaction history remains available for ranking and SQL reporting.
+
+Reactions are data-driven. The current supported reaction kinds are `like`, `support`, and `good_vibes`; older clients that omit `reaction_kind` default to `like`. Feed and search responses return both `viewer_has_reacted` and `viewer_reaction_kind`.
+
+The mobile feed retains at most five complete feed pages, or 100 posts, in memory. Scrolling down appends the next page and releases the lowest page when necessary; scrolling back near the top reloads the preceding released page and releases the highest page when necessary. The UI reports retained posts separately from the API's `meta.total`, and search results remain independent at the API's 10-result limit.
+
+Seeded demo content is idempotent. Running `php artisan db:seed` preserves existing owner-UAT posts and creates additional believable demo users, avatar URLs, varied post text, valid image URLs, a controlled broken-image case, long posts for Read more / Show less, and enough posts to exercise multiple pages.
+
+Production media and pagination limitations are documented in `docs/production-readiness.md`.
+
 ## Tests
 
 Laravel tests:

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ReactionKind;
 use App\Models\Interaction;
 use App\Models\Post;
 use App\Models\User;
@@ -46,6 +47,38 @@ class FeedRankingTest extends TestCase
             ->assertJsonCount(20, 'data')
             ->assertJsonPath('meta.per_page', 20)
             ->assertJsonPath('meta.total', 25);
+    }
+
+    public function test_feed_hydrates_viewer_reaction_state_and_author_avatar_without_leaking_other_users_state(): void
+    {
+        $viewer = $this->user('viewer@example.test');
+        $otherViewer = $this->user('other-viewer@example.test');
+        $author = $this->user('author@example.test', [
+            'avatar_url' => 'https://images.example.test/avatar.jpg',
+        ]);
+        $reacted = $this->postFor($author, ['text' => 'reacted']);
+        $notReacted = $this->postFor($author, ['text' => 'not reacted']);
+
+        $viewer->postReactions()->create([
+            'post_id' => $reacted->id,
+            'reaction_kind' => ReactionKind::Support->value,
+        ]);
+        $otherViewer->postReactions()->create([
+            'post_id' => $notReacted->id,
+            'reaction_kind' => ReactionKind::GoodVibes->value,
+        ]);
+        Sanctum::actingAs($viewer);
+
+        $response = $this->getJson('/api/feed')
+            ->assertOk()
+            ->assertJsonPath('data.0.author.avatar_url', 'https://images.example.test/avatar.jpg')
+            ->json('data');
+
+        $byId = collect($response)->keyBy('id');
+        $this->assertTrue($byId[$reacted->id]['viewer_has_reacted']);
+        $this->assertSame(ReactionKind::Support->value, $byId[$reacted->id]['viewer_reaction_kind']);
+        $this->assertFalse($byId[$notReacted->id]['viewer_has_reacted']);
+        $this->assertNull($byId[$notReacted->id]['viewer_reaction_kind']);
     }
 
     public function test_authenticity_signal_affects_ranking(): void
@@ -146,13 +179,13 @@ class FeedRankingTest extends TestCase
         $this->assertLessThan(array_search($lowerId->id, $ids, true), array_search($higherId->id, $ids, true));
     }
 
-    private function user(string $email): User
+    private function user(string $email, array $attributes = []): User
     {
-        return User::query()->create([
+        return User::query()->create(array_merge([
             'name' => $email,
             'email' => $email,
             'password' => 'password',
-        ]);
+        ], $attributes));
     }
 
     private function postFor(User $author, array $attributes = []): Post
